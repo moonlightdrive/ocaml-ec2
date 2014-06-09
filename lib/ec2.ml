@@ -2,10 +2,12 @@ let service = "ec2"
 		
 let version = "2014-05-01"
 
-
 let sample_access = "AKIAIOSFODNN7EXAMPLE"
 let sample_secret = "wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY"
 
+let key name = Unix.getenv name
+let iam_secret = key "AWS_SECRET_ACCESS_KEY"
+let iam_access = key "AWS_ACCESS_KEY_ID"
 
 module Time = struct
 
@@ -44,22 +46,7 @@ module URI = struct
 				      
 end
 
-module Monad = struct
-(*
-type request = {
-  meth: Cohttp.Code.meth; uri: Uri.t;
-  headers: Cohttp.Header.t; body: Cohttp_lwt_body.t;
-}
- *)
-
-
-
-end
-
-(* is this module necessary *)
 module Field = struct
-
-  (*  type t = (string * string) *)
 	     
   (* Turns ("Field","value") into "Field=value" *)
   let to_string (f,v) = Printf.sprintf "%s=%s" f v
@@ -71,13 +58,11 @@ module Field = struct
       List.intersperse ~sep:"&" |>
       String.concat ~sep:"" 
 
-(*
-  (* number_fields "RegionNames.%i" ["eu-west-1";"us-east-1"] 
-  -> [("RegionNames.1","eu-west-1"); ("RegionNames.2","us-east-1")] *)
+  (* Turns "RegionNames.%i" ["eu-west-1";"us-east-1"] into
+     [("RegionNames.1","eu-west-1"); ("RegionNames.2","us-east-1")] *)
   let number_fields pattern values =
     let names = Core.Std.List.init (List.length values) ~f:(fun n -> Printf.sprintf pattern (n+1)) in
-    Core.Std.List.zip names values
- *)
+    Core.Std.List.zip_exn names values 
 	     
 end
 
@@ -114,11 +99,10 @@ module Signature = struct
 
 end
 
-
 module API = struct
          
-  let param_list action = 
-    (*List.rev_append additional *)["Action", action; "Version", version] 
+  let param_list ~params action =
+    List.rev_append ["Action", action; "Version", version] params
 
   let realize_body field_pairs = Cohttp_lwt_body.of_string (Field.query_string field_pairs)
 				     
@@ -136,25 +120,29 @@ module API = struct
     let signature = signature ~secret ~timestamp ~region str_to_sign in
     let auth_header = List.map Field.to_string [ (signing_algorithm^" Credential", credentials)
 					       ; ("SignedHeaders", signed_headers)
-					       ; ("Signature", signature) ]
+					       ; ("Signature", signature) 
+					       ]
 		      |> String.concat ", " in
     Cohttp.Header.of_list [ "Authorization", auth_header
 			  ; "Content-Type", content_type
-			  ; "X-Amz-Date", Time.date_time timestamp ]
+			  ; "X-Amz-Date", Time.date_time timestamp 
+			  ]
 
-let make_req ~headers ~body meth uri = Cohttp_lwt_unix.Client.call ~headers ~body ~chunked:false meth uri
+let make_req meth headers body uri = Cohttp_lwt_unix.Client.call ~headers ~body ~chunked:false meth uri
 
 let handle_response (envelope,body) =
-    Lwt.return (Cohttp_lwt_body.to_string body)
+(*    Lwt.return (Cohttp_lwt_body.to_string body)*)
+  Lwt.bind (Cohttp_lwt_body.to_string body) Lwt_io.print
 (*  let status = Cohttp_lwt_unix.Response.status envelope in
   Lwt.return (Cohttp.Code.string_of_status status |> print_endline)
  *)
-let verb meth action ?(region="us-east-1") =								   
-  let params = param_list action in
+
+let verb meth action ?(region="us-east-1") ~params =
+  let params = param_list action ~params in
   let headers = realize_headers meth action ~params ~region in
   let body = realize_body params in
   let uri = URI.base region in
-  Lwt.bind (make_req ~headers ~body meth uri) handle_response
+  Lwt.bind (make_req meth headers body uri) handle_response
 
 let get = verb `GET 
 
@@ -162,18 +150,57 @@ let post = verb `POST
     
 end
 
+module AMI = struct
+  
+  let deregister_image id =
+    let params = [("ImageId", id)] in
+    API.get "DeregisterImage" ~params
+
+  let register_image name ?image =
+    let params = ("Name", name) in
+    let params = match image with
+      | Some image -> params::[("ImageLocation", image)]
+      | None -> [params] in
+    API.get "RegisterImage" ~params
+
+end
+
+module EBS = struct
+	     
+  let delete_volume id =
+    let params = [("VolumeId", id)] in
+    API.post "DeleteVolume" ~params
+
+end
+
+module Instances = struct
+
+  (* TODO implement the remaining parameters *)
+  let describe_status ?ids ?(all=false) () =
+    let params = ("IncludeAllInstances", string_of_bool all) in
+    let params = match ids with 
+      | Some ids -> params::(Field.number_fields "InstanceId.%i" ids) 
+      | None -> [params] in
+    API.get "DescribeInstanceStatus" ~params
+
+  let start ids =
+    let params = Field.number_fields "InstanceId.%i" ids in
+    API.post "StartInstances" ~params	     
+
+  let stop ?(force=false) ids =
+    let params = ("Force", string_of_bool force) in
+    let params = params::(Field.number_fields "InstanceId.%i" ids) in
+    API.post "StopInstances" ~params
+
+  let get_console_output id =
+    let params = [("InstanceId", id)] in
+    API.post "GetConsoleOutput" ~params
+
+end
 	       
 module Regions = struct
   
   let describe = 
-    API.get "DescribeRegions" ~region:"us-west-2"
+    API.get "DescribeRegions" ~params:[]
 	    
 end
-
-
-
-
-let _ = 
-(*  let region = "us-west-2" in*)
-(*  let region_names = Field.number_fields "RegionName.%i" ["us-east-1";"eu-west-1"] in *)
-  Lwt_main.run (Regions.describe)
