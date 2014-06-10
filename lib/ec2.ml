@@ -166,6 +166,13 @@ module AMI = struct
 end
 
 module EBS = struct
+
+  let create_snapshot ?description id =
+    let params = ("VolumeId", id) in
+    let params = match description with
+      | Some description -> params::[("Description", description)]
+      | None -> [params] in
+    API.get "CreateSnapshot" ~params
 	     
   let delete_volume id =
     let params = [("VolumeId", id)] in
@@ -183,20 +190,35 @@ module Instances = struct
       | None -> [params] in
     API.get "DescribeInstanceStatus" ~params
 
+  let get_console_output id =
+    let params = [("InstanceId", id)] in
+    API.get "GetConsoleOutput" ~params
+
+  (* TODO this function has 1000 request parameters *)
+  let run ?(min=1) ?(max=1) ?(instance="m1.small") ?zone ?kernel id =
+    let params = match zone with
+      | Some zone -> [("Placement.AvailabilityZone", zone)]
+      | None -> [] in
+    let params = match kernel with
+      | Some kernel -> ("KernelId", kernel)::params
+      | None -> params in
+    let params = params@[("ImageId", id); ("MinCount", string_of_int min); ("MaxCount", string_of_int max)] in
+    API.get "RunInstances" ~params
+
   let start ids =
     let params = Field.number_fields "InstanceId.%i" ids in
-    API.post "StartInstances" ~params	     
+    API.get "StartInstances" ~params	     
 
   let stop ?(force=false) ids =
     let params = ("Force", string_of_bool force) in
     let params = params::(Field.number_fields "InstanceId.%i" ids) in
-    API.post "StopInstances" ~params
+    API.get "StopInstances" ~params
 
-  let get_console_output id =
-    let params = [("InstanceId", id)] in
-    API.post "GetConsoleOutput" ~params
+  let terminate ids = 
+    let params = Field.number_fields "InstanceId.%i" ids in
+    API.get "TerminateInstances" ~params
 
-end
+end 
 	       
 module Regions = struct
   
@@ -204,3 +226,8 @@ module Regions = struct
     API.get "DescribeRegions" ~params:[]
 	    
 end
+
+let _ =
+  let region = "us-west-2" in
+(*  Lwt_main.run (Instances.run "ami-b789f987" ~instance:"t1.micro" ~region)*)
+  Lwt_main.run (Instances.terminate ["i-f4fa7ffc"] ~region)
