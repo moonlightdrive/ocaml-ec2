@@ -1,4 +1,4 @@
-export OPAM_DEPENDS="lwt cohttp ezxmlm uri cryptokit core_extended threads"
+OPAM_DEPENDS="lwt cohttp ezxmlm uri cryptokit core_extended threads"
 
 case "$OCAML_VERSION,$OPAM_VERSION" in
 4.00.1,1.0.0) ppa=avsm/ocaml40+opam10 ;;
@@ -17,6 +17,6 @@ export OPAMVERBOSE=1
 
 opam init
 #opam pin?
-opam install $(OPAM_DEPENDS)
+opam install ${OPAM_DEPENDS}
 eval `opam config env`
 make
