@@ -1,0 +1,21 @@
+Name: ec2
+Version: 0.1
+Synopsis: Amazon EC2 API interface
+Authors: Jyotsna Prakash
+License: LGPL-2.1 with OCaml linking exception
+OASISFormat: 0.4
+BuildTools: ocamlbuild
+Plugins: META (0.4), DevFiles (0.4)
+
+Library ec2
+  Path: lib
+  Findlibname: ec2
+  Modules: Ec2
+  BuildDepends: cohttp.lwt, cohttp, uri, cryptokit, core_extended, threads, ezxmlm
+
+Executable parse_response
+  Path: lib_test
+  MainIs: parse_response.ml
+  Custom: true
+  Install: false
+  BuildDepends: ezxmlm
