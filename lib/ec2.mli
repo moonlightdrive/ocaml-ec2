@@ -1,13 +1,7 @@
-val service : string
-val version : string
-val key : string -> string
-val iam_secret : string
-val iam_access : string
 module EC2_t :
   sig
     type time = string
     type successful = bool
-    type register_img = string
     type create_snapshot = {
       snapshot : string;
       volume : string;
@@ -133,6 +127,15 @@ module AMI :
     val deregister_image : string -> ?region:string -> bool Lwt.t
     val register_image : string -> ?image:string -> ?region:string -> string Lwt.t
   end
+module Instances :
+  sig
+(*    val describe_status : ?ids:string list -> ?all:bool -> ?region:string -> ___ Lwt.t *)
+    val get_console_output : string -> ?region:string -> EC2_t.console_output Lwt.t
+    val run : ?min:int -> ?max:int -> ?instance:string -> ?zone:string -> ?kernel:string -> string -> ?region:string -> EC2_t.run_instances Lwt.t
+    val start : string list -> ?region:string -> EC2_t.instance_state_change list Lwt.t
+    val stop : ?force:bool -> string list -> ?region:string -> EC2_t.instance_state_change list Lwt.t
+    val terminate : string list -> ?region:string -> EC2_t.instance_state_change list Lwt.t
+  end										  
 module Regions :
   sig
     val describe : ?region:string -> EC2_t.describe_regions Lwt.t

@@ -8,8 +8,9 @@ let iam_access = key "AWS_ACCESS_KEY"
 
 module EC2_t = struct
 
-(*  type successful = bool
-  type register_img = string *)
+  type time = string
+
+  type successful = bool
 
   type create_snapshot = { snapshot: string;
 			   volume: string;
@@ -19,10 +20,10 @@ module EC2_t = struct
 			   owner: string;
 			   size: string;
 			   encrypted: bool;
-			   description: string; }
+			   description: string }
 
   type console_output = { instance: string;
-			  timestamp: string; (* string->time? *)
+			  timestamp: time;
 			  output: string }
 			  
   type instance_state = { code: int; name: string; }
@@ -39,7 +40,7 @@ see http://docs.aws.amazon.com/AWSEC2/latest/APIReference/ApiReference-ItemType-
 			    ami_launch_index: string;
 			    (*product_codes: productCodesSetItemType*)
 			    instance_type: string;
-			    launch_time: string; (* string->time? *)
+			    launch_time: time;
 			    (*placement:*)
 			    kernel: string;
 			    (* TODO there are more fields! *)
@@ -50,36 +51,29 @@ see http://docs.aws.amazon.com/AWSEC2/latest/APIReference/ApiReference-ItemType-
 			    (*security_groups:*)
 			    instances: running_instance list;
 			    requester: string }
-
   type instance_state_change = { id: string; 
 				 current: instance_state;
 				 previous: instance_state; }
 
 
-  type region_item = { name: string; endpoint: string }
-  type describe_regions = region_item list
+  type region = { name: string; endpoint: string }
+  type describe_regions = region list
 
 end
 
-
+		 
 module EC2_x = struct
   open Ezxmlm
   open EC2_t
 
-
 let _member name xml = data_to_string (member name xml)
 let success xml = bool_of_string (_member "return" xml)
 
-let dereg_img_of_string x =
-  let x = member "DeregisterImageResponse" x in
-  _member "return" x (*success x*)
+let dereg_img_of_string = success
 
-let reg_img_of_string x = 
-  let x = member "RegisterImageResponse" x in
-  _member "imageId" x
+let reg_img_of_string = _member "imageId"
 
 let create_snap_of_string x =
-  let x = member "CreateSnapshotResponse" x in
   { snapshot = member "snapshotId" x |> data_to_string
   ; volume = _member "volumeId" x
   ; status = _member "status" x
@@ -90,12 +84,9 @@ let create_snap_of_string x =
   ; encrypted = _member "encrypted" x |> bool_of_string
   ; description = _member "description" x }
 
-let delete_vol_of_string x =
-  let x = member "DeleteVolumeResponse" x in
-  _member "return" (*x |> bool_of_string*)
+let delete_vol_of_string = success
 
 let console_output_of_string x =
-  let x = member "GetConsoleOutputResponse" x in
   { instance = _member "instanceId" x;
     timestamp = _member "timestamp" x;
     output = _member "output" x; (* base64 encoded *)
@@ -104,7 +95,6 @@ let console_output_of_string x =
 let instance_state_of_string x = 
   { code = _member "code" x |> int_of_string;
     name = _member "name" x }
-
 
 let running_instances_of_string item = 
   { id = _member "instanceId" item;
@@ -118,19 +108,14 @@ let running_instances_of_string item =
     (*product_codes = member "productCodes" item |> members "item" |> smth_of_string *)
     instance_type = _member "instanceType" item;
     launch_time = _member "launchTime" item;
-    kernel = _member "kernelId" item }
-    
-    
-  
+    kernel = _member "kernelId" item }  
 
 let run_instances_of_string x =
-  let x = member "RunInstancesResponse" x in
   { reservation = _member "reservationId" x;
     owner = _member "ownerId" x;
     (* security group..*)
     instances = member "instancesSet" x |> members "item" |> List.map running_instances_of_string;
-    requester = _member "requesterId" x }					    
-
+    requester = _member "requesterId" x }					 
 
 let instance_state_change_of_string x = 
   let x = member "item" x in
@@ -138,24 +123,23 @@ let instance_state_change_of_string x =
     current = member "currentState" x |> instance_state_of_string;
     previous = member "previousState" x |> instance_state_of_string; }
 
-
 let start_instances_of_string x =
-  let x = member "StartInstancesResponse" x |> members "item" in
-  List.map instance_state_change_of_string 
+  let x = members "item" x in
+  List.map instance_state_change_of_string x
 
 let stop_instances_of_string x =
-  let x = member "StopInstancesResponse" x |> members "item" in
+  let x = members "item" x in
   List.map instance_state_change_of_string x
 
 let terminate_instances_of_string x =
-  let x = member "TerminateInstancesResponse" x |> members "item" in
+  let x = members "item" x in
   List.map instance_state_change_of_string x
-
+ 
 let desc_regions_of_string xml =
-  let xml = member "DescribeRegionsResponse" xml |> member "regionInfo" |> members "item" in
+  let xml = member "regionInfo" xml |> members "item" in
   List.map (fun i -> { name = member "regionName" i |> data_to_string;
 		       endpoint = member "regionEndpoint" i |> data_to_string }) xml
-
+ 
 end
 
 
@@ -288,11 +272,13 @@ module API = struct
   let make_req meth headers body uri = Cohttp_lwt_unix.Client.call ~headers ~body ~chunked:false meth uri
 
   (* do we really want Lwt_main.run here *)
-  let handle_response fn (envelope,body) = 
+  let handle_response action fn (envelope,body) = 
     let body = Lwt_main.run (Cohttp_lwt_body.to_string body) in
     let (_,body) = Ezxmlm.from_string body in
+    let resp = action^"Response" in
+    let body = Ezxmlm.member resp body in
     let parse b = Lwt.return (fn b) in
-    parse body
+    parse body 
 	     
   let verb meth action fn ?(region="us-east-1") ~params =
     let region = "us-west-2" in (* TODO *)
@@ -300,31 +286,30 @@ module API = struct
     let headers = realize_headers meth action ~params ~region in
     let body = realize_body params in
     let uri = URI.base region in
-    Lwt.bind (make_req meth headers body uri) (handle_response fn)
+    Lwt.bind (make_req meth headers body uri) (handle_response action fn)
 	     
-  let get = verb `GET 
+  let get action (fn: Ezxmlm.nodes -> 'a) = verb `GET action fn
 		 
-  let post = verb `POST
+  let post action (fn: Ezxmlm.nodes -> 'a) = verb `POST action fn
 		  
 end
-
 open EC2_t
 open EC2_x
 
 module AMI = struct
-  
+ 
   let deregister_image id =
     let params = [("ImageId", id)] in
-    API.get "DeregisterImage" ~params dereg_img_of_string 
+    API.get "DeregisterImage" ~params dereg_img_of_string
 
   let register_image name ?image =
     let params = ("Name", name) in
     let params = match image with
       | Some image -> params::[("ImageLocation", image)]
       | None -> [params] in
-    API.get "RegisterImage" ~params (reg_img_of_string 
-
-end
+    API.get "RegisterImage" ~params reg_img_of_string
+ 
+end 
 
 module EBS = struct
 
@@ -342,7 +327,7 @@ module EBS = struct
 end
 	       
 module Instances = struct
-
+(*
   (* TODO implement the remaining parameters *)
   let describe_status ?ids ?(all=false) () =
     let params = ("IncludeAllInstances", string_of_bool all) in
@@ -350,7 +335,7 @@ module Instances = struct
       | Some ids -> params::(Field.number_fields "InstanceId.%i" ids) 
       | None -> [params] in
     API.get "DescribeInstanceStatus" ~params
-
+ *)
   let get_console_output id =
     let params = [("InstanceId", id)] in
     API.get "GetConsoleOutput" ~params console_output_of_string
@@ -366,30 +351,27 @@ module Instances = struct
     let params = params@[("ImageId", id); ("MinCount", string_of_int min); ("MaxCount", string_of_int max)] in
     API.get "RunInstances" ~params run_instances_of_string
 
-  let start ids =
+  let start (ids : string list) =
     let params = Field.number_fields "InstanceId.%i" ids in
-    API.get "StartInstances" ~params start_instances_of_string	     
+    API.get "StartInstances" ~params start_instances_of_string
 
-  let stop ?(force=false) ids =
+  let stop ?(force=false) (ids : string list) =
     let params = ("Force", string_of_bool force) in
     let params = params::(Field.number_fields "InstanceId.%i" ids) in
     API.get "StopInstances" ~params stop_instances_of_string
 
-  let terminate ids = 
+  let terminate (ids : string list) = 
     let params = Field.number_fields "InstanceId.%i" ids in
-    API.get "TerminateInstances" ~params terminate_instances_of_string
+    API.get "TerminateInstances" ~params terminate_instances_of_string 
 
 end 
-	       
+
 module Regions = struct
   
   let describe = 
     API.get "DescribeRegions" ~params:[] desc_regions_of_string
 	    
 end
+ 
 
-let _ =
-  let region = "us-west-2" in
-  Lwt_main.run (Instances.run "ami-b789f987" ~instance:"t1.micro" ~region)
- (* let response = Lwt_main.run (Regions.describe ~region) in
-  List.map (fun region -> print_endline region.name) response*)
+
