@@ -16,7 +16,7 @@ module EC2_t :
     type console_output = {
       instance : string;
       timestamp : time;
-      output : string;
+      output : string; (* base64 encoded *)
     }
     type instance_state = { code : int; name : string; }
     type running_instance = {
@@ -54,49 +54,8 @@ module EC2_x :
     val reg_img_of_string : Ezxmlm.nodes -> string
     val desc_regions_of_string : Ezxmlm.nodes -> EC2_t.describe_regions
   end
-module Time :
-  sig
-    val date_yymmdd : Core.Time0.t -> string
-    val date_time : Core.Time0.t -> string
-    val now_utc : Core.Time0.t
-  end
-module Hash :
-  sig
-    val hex_encode : string -> string
-    val sha256 : ?k:string -> string -> string
-    val hex_hash : ?k:string -> string -> string
-  end
-module URI : sig val host : string -> string val base : string -> Uri.t end
-module Field :
-  sig
-    val to_string : string * string -> string
-    val query_string : (string * string) list -> string
-    val number_fields :
-      (int -> 'a, unit, string) format -> 'b list -> ('a * 'b) list
-  end
-module Signature :
-  sig
-    val signing_algorithm : string
-    val v4_req : string
-    val content_type : string
-    val signed_headers : string
-    val canonical_headers : timestamp:Core.Time0.t -> string -> string
-    val canonical_request :
-      Cohttp.Code.meth ->
-      timestamp:Core.Time0.t ->
-      host:string ->
-      ?uri:string -> ?query:string -> ?payload:string -> unit -> string
-    val credential_scope : Core.Time0.t -> string -> string
-    val str_to_sign :
-      timestamp:Core.Time0.t -> cred_scope:string -> req:string -> string
-    val signature :
-      secret:string ->
-      timestamp:Core.Time0.t -> region:string -> string -> string
-  end
 module API :
   sig
-    val param_list :
-      params:(string * string) list -> string -> (string * string) list
     val realize_body : (string * string) list -> Cohttp_lwt_body.t
     val realize_headers :
       Cohttp.Code.meth ->
@@ -106,13 +65,6 @@ module API :
       Cohttp.Header.t ->
       Cohttp_lwt_body.t ->
       Uri.t -> (Cohttp.Response.t * Cohttp_lwt_body.t) Lwt.t
-    val handle_response :
-      string -> (Ezxmlm.nodes -> 'a) -> 'b * Cohttp_lwt_body.t -> 'a Lwt.t
-    val verb :
-      Cohttp.Code.meth ->
-      string ->
-      (Ezxmlm.nodes -> 'a) ->
-      ?region:string -> params:(string * string) list -> 'a Lwt.t
     val get :
       string ->
       (Ezxmlm.nodes -> 'a) ->
@@ -124,6 +76,7 @@ module API :
   end
 module AMI :
   sig
+   (* val deregister_image : EC2_t.img_id -> ?region:string -> bool Lwt.t*)
     val deregister_image : string -> ?region:string -> bool Lwt.t
     val register_image : string -> ?image:string -> ?region:string -> string Lwt.t
   end

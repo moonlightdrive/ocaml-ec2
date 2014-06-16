@@ -7,7 +7,6 @@ let iam_secret = key "AWS_SECRET_KEY"
 let iam_access = key "AWS_ACCESS_KEY"
 
 module EC2_t = struct
-
   type time = string
 
   type successful = bool
@@ -89,7 +88,7 @@ let delete_vol_of_string = success
 let console_output_of_string x =
   { instance = _member "instanceId" x;
     timestamp = _member "timestamp" x;
-    output = _member "output" x; (* base64 encoded *)
+    output = _member "output" x;
   }
 
 let instance_state_of_string x = 
@@ -293,6 +292,7 @@ module API = struct
   let post action (fn: Ezxmlm.nodes -> 'a) = verb `POST action fn
 		  
 end
+
 open EC2_t
 open EC2_x
 
