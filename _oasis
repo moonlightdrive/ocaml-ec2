@@ -11,7 +11,7 @@ Library ec2
   Path: lib
   Findlibname: ec2
   Modules: Ec2
-  BuildDepends: cohttp.lwt, cohttp, uri, cryptokit, core_extended, threads, ezxmlm
+  BuildDepends: cohttp.lwt, lwt.syntax, cohttp, uri, cryptokit, core_extended, threads, ezxmlm
 
 Executable parse_response
   Path: lib_test

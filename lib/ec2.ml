@@ -66,7 +66,9 @@ module EC2_x = struct
   open EC2_t
 
 let _member name xml = data_to_string (member name xml)
+
 let success xml = bool_of_string (_member "return" xml)
+
 
 let dereg_img_of_string = success
 
@@ -117,7 +119,6 @@ let run_instances_of_string x =
     requester = _member "requesterId" x }					 
 
 let instance_state_change_of_string x = 
-  let x = member "item" x in
   { id = _member "instanceId" x;
     current = member "currentState" x |> instance_state_of_string;
     previous = member "previousState" x |> instance_state_of_string; }
@@ -272,7 +273,8 @@ module API = struct
 
   (* do we really want Lwt_main.run here *)
   let handle_response action fn (envelope,body) = 
-    let body = Lwt_main.run (Cohttp_lwt_body.to_string body) in
+    (*let body = Lwt_main.run (Cohttp_lwt_body.to_string body) in*)
+    lwt body = Cohttp_lwt_body.to_string body in
     let (_,body) = Ezxmlm.from_string body in
     let resp = action^"Response" in
     let body = Ezxmlm.member resp body in
@@ -280,7 +282,6 @@ module API = struct
     parse body 
 	     
   let verb meth action fn ?(region="us-east-1") ~params =
-    let region = "us-west-2" in (* TODO *)
     let params = param_list action ~params in
     let headers = realize_headers meth action ~params ~region in
     let body = realize_body params in
@@ -373,5 +374,8 @@ module Regions = struct
 	    
 end
  
-
+let _ = 
+  let region = "us-west-2" in
+  let describe_regs = Lwt_main.run (Regions.describe ~region) in
+  List.map (fun r -> print_endline r.name) describe_regs
 
