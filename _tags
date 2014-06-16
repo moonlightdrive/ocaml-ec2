@@ -1,0 +1,29 @@
+# OASIS_START
+# DO NOT EDIT (digest: 6bb20dd02ee30fdafa464898f948cac7)
+# Ignore VCS directories, you can use the same kind of rule outside
+# OASIS_START/STOP if you want to exclude directories that contains
+# useless stuff for the build process
+<**/.svn>: -traverse
+<**/.svn>: not_hygienic
+".bzr": -traverse
+".bzr": not_hygienic
+".hg": -traverse
+".hg": not_hygienic
+".git": -traverse
+".git": not_hygienic
+"_darcs": -traverse
+"_darcs": not_hygienic
+# Library ec2
+"lib/ec2.cmxs": use_ec2
+<lib/*.ml{,i}>: pkg_cohttp
+<lib/*.ml{,i}>: pkg_cohttp.lwt
+<lib/*.ml{,i}>: pkg_core_extended
+<lib/*.ml{,i}>: pkg_cryptokit
+<lib/*.ml{,i}>: pkg_ezxmlm
+<lib/*.ml{,i}>: pkg_threads
+<lib/*.ml{,i}>: pkg_uri
+# Executable parse_response
+"lib_test/parse_response.byte": pkg_ezxmlm
+<lib_test/*.ml{,i}>: pkg_ezxmlm
+"lib_test/parse_response.byte": custom
+# OASIS_STOP
