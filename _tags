@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: 7a263ec976e8e256463b7ef9c9062b0a)
+# DO NOT EDIT (digest: a9a365384f7c4c14aabb331fe6fb4260)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -23,8 +23,24 @@
 <lib/*.ml{,i}>: pkg_lwt.syntax
 <lib/*.ml{,i}>: pkg_threads
 <lib/*.ml{,i}>: pkg_uri
-# Executable parse_response
-"lib_test/parse_response.byte": pkg_ezxmlm
+# Executable describe_regions
+"lib_test/describe_regions.byte": pkg_cohttp
+"lib_test/describe_regions.byte": pkg_cohttp.lwt
+"lib_test/describe_regions.byte": pkg_core_extended
+"lib_test/describe_regions.byte": pkg_cryptokit
+"lib_test/describe_regions.byte": pkg_ezxmlm
+"lib_test/describe_regions.byte": pkg_lwt.syntax
+"lib_test/describe_regions.byte": pkg_threads
+"lib_test/describe_regions.byte": pkg_uri
+"lib_test/describe_regions.byte": use_ec2
+<lib_test/*.ml{,i}>: pkg_cohttp
+<lib_test/*.ml{,i}>: pkg_cohttp.lwt
+<lib_test/*.ml{,i}>: pkg_core_extended
+<lib_test/*.ml{,i}>: pkg_cryptokit
 <lib_test/*.ml{,i}>: pkg_ezxmlm
-"lib_test/parse_response.byte": custom
+<lib_test/*.ml{,i}>: pkg_lwt.syntax
+<lib_test/*.ml{,i}>: pkg_threads
+<lib_test/*.ml{,i}>: pkg_uri
+<lib_test/*.ml{,i}>: use_ec2
+"lib_test/describe_regions.byte": custom
 # OASIS_STOP

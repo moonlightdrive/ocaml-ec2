@@ -13,9 +13,9 @@ Library ec2
   Modules: Ec2
   BuildDepends: cohttp.lwt, lwt.syntax, cohttp, uri, cryptokit, core_extended, threads, ezxmlm
 
-Executable parse_response
+Executable describe_regions
   Path: lib_test
-  MainIs: parse_response.ml
+  MainIs: describe_regions.ml
   Custom: true
   Install: false
-  BuildDepends: ezxmlm
+  BuildDepends: ec2
