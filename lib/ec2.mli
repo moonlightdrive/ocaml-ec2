@@ -54,6 +54,11 @@ module EC2_x :
     val reg_img_of_string : Ezxmlm.nodes -> string
     val desc_regions_of_string : Ezxmlm.nodes -> EC2_t.describe_regions
   end
+module Monad : sig
+  type 'a t
+  val bind : 'a t -> ('a -> 'b t) -> 'b t
+  val return : 'a -> 'a t
+end
 module API :
   sig
     val realize_body : (string * string) list -> Cohttp_lwt_body.t
@@ -93,3 +98,4 @@ module Regions :
   sig
     val describe : ?region:string -> EC2_t.describe_regions Lwt.t
   end
+  

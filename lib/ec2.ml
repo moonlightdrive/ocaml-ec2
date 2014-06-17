@@ -240,6 +240,13 @@ module Signature = struct
 
 end
 
+module Monad = struct
+
+type error = 
+  | Generic of Cohttp_lwt_unix.Response.t
+
+end
+
 module API = struct
          
   let param_list ~params action =
@@ -373,9 +380,15 @@ module Regions = struct
     API.get "DescribeRegions" ~params:[] desc_regions_of_string
 	    
 end
- 
+
+
+let region = "us-west-2"
+
+let print_resp {name; endpoint} =
+  print_endline (Printf.sprintf "%s: %s" name endpoint)
+
 let _ = 
-  let region = "us-west-2" in
   let describe_regs = Lwt_main.run (Regions.describe ~region) in
-  List.map (fun r -> print_endline r.name) describe_regs
+  List.map print_resp describe_regs
+
 
