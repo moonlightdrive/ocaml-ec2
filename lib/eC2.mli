@@ -1,16 +1,3 @@
-module EC2_x :
-  sig
-    val _member : string -> Ezxmlm.nodes -> string
-    val success : Ezxmlm.nodes -> bool
-    val dereg_img_of_string : Ezxmlm.nodes -> bool
-    val reg_img_of_string : Ezxmlm.nodes -> string
-    val desc_regions_of_string : Ezxmlm.nodes -> EC2_t.describe_regions
-  end
-module Monad : sig
-(*  type 'a t
-  val bind : 'a t -> ('a -> 'b t) -> 'b t
-  val return : 'a -> 'a t*)
-end
 module API :
   sig
     val realize_body : (string * string) list -> Cohttp_lwt_body.t
@@ -46,8 +33,7 @@ module Instances :
     val stop : ?force:bool -> string list -> ?region:string -> EC2_t.instance_state_change list Lwt.t
     val terminate : string list -> ?region:string -> EC2_t.instance_state_change list Lwt.t
   end										  
-module Regions :
-  sig
-    val describe : ?region:string -> EC2_t.describe_regions Lwt.t
-  end
+module Regions : sig
+  val describe : ?region:string -> EC2_t.describe_regions Lwt.t
+end
   
