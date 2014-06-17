@@ -5,61 +5,6 @@ let version = "2014-05-01"
 let key name = Unix.getenv name
 let iam_secret = key "AWS_SECRET_KEY"
 let iam_access = key "AWS_ACCESS_KEY"
-
-module EC2_t = struct
-  type time = string
-
-  type successful = bool
-
-  type create_snapshot = { snapshot: string;
-			   volume: string;
-			   status: string; (* pending|completed|error *)
-			   start_time: string;
-			   progress: string;
-			   owner: string;
-			   size: string;
-			   encrypted: bool;
-			   description: string }
-
-  type console_output = { instance: string;
-			  timestamp: time;
-			  output: string }
-			  
-  type instance_state = { code: int; name: string; }
-  (* name: pending|running|shutting-down... code: 16-bit unsigned
-see http://docs.aws.amazon.com/AWSEC2/latest/APIReference/ApiReference-ItemType-InstanceStateType.html *)
-
-  type running_instance = { id: string;
-			    image: string;
-			    state: instance_state;
-			    private_dns: string;
-			    public_dns: string;
-			    reason: string;
-			    key_name: string;
-			    ami_launch_index: string;
-			    (*product_codes: productCodesSetItemType*)
-			    instance_type: string;
-			    launch_time: time;
-			    (*placement:*)
-			    kernel: string;
-			    (* TODO there are more fields! *)
-			  }
-
-  type run_instances = { reservation: string;
-			    owner: string;
-			    (*security_groups:*)
-			    instances: running_instance list;
-			    requester: string }
-  type instance_state_change = { id: string; 
-				 current: instance_state;
-				 previous: instance_state; }
-
-
-  type region = { name: string; endpoint: string }
-  type describe_regions = region list
-
-end
-
 		 
 module EC2_x = struct
   open Ezxmlm
@@ -75,23 +20,22 @@ let dereg_img_of_string = success
 let reg_img_of_string = _member "imageId"
 
 let create_snap_of_string x =
-  { snapshot = member "snapshotId" x |> data_to_string
-  ; volume = _member "volumeId" x
-  ; status = _member "status" x
-  ; start_time = _member "startTime" x (* string -> time? *)
-  ; progress = _member "progress" x
-  ; owner = _member "ownerId" x
-  ; size = _member "volumeSize" x
-  ; encrypted = _member "encrypted" x |> bool_of_string
-  ; description = _member "description" x }
-
+  { snapshot = member "snapshotId" x |> data_to_string;
+    volume = _member "volumeId" x;
+    status = _member "status" x;
+    start_time = _member "startTime" x; (* string -> time? *)
+    progress = _member "progress" x;
+    owner = _member "ownerId" x;
+    size = _member "volumeSize" x;
+    encrypted = _member "encrypted" x |> bool_of_string;
+    description = _member "description" x; }
+    
 let delete_vol_of_string = success
 
 let console_output_of_string x =
   { instance = _member "instanceId" x;
     timestamp = _member "timestamp" x;
-    output = _member "output" x;
-  }
+    output = _member "output" x; }
 
 let instance_state_of_string x = 
   { code = _member "code" x |> int_of_string;
@@ -245,6 +189,11 @@ module Monad = struct
 type error = 
   | Generic of Cohttp_lwt_unix.Response.t
 
+let error_to_string = function
+  | Generic res -> Printf.sprintf "HTTP Error %s" (Cohttp.Code.string_of_status (Cohttp_lwt_unix.Response.status res))
+
+
+
 end
 
 module API = struct
@@ -380,15 +329,3 @@ module Regions = struct
     API.get "DescribeRegions" ~params:[] desc_regions_of_string
 	    
 end
-
-
-let region = "us-west-2"
-
-let print_resp {name; endpoint} =
-  print_endline (Printf.sprintf "%s: %s" name endpoint)
-
-let _ = 
-  let describe_regs = Lwt_main.run (Regions.describe ~region) in
-  List.map print_resp describe_regs
-
-

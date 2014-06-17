@@ -10,12 +10,13 @@ Plugins: META (0.4), DevFiles (0.4)
 Library ec2
   Path: lib
   Findlibname: ec2
-  Modules: Ec2
+  Modules: EC2, EC2_t
   BuildDepends: cohttp.lwt, lwt.syntax, cohttp, uri, cryptokit, core_extended, threads, ezxmlm
 
 Executable describe_regions
   Path: lib_test
   MainIs: describe_regions.ml
   Custom: true
+  CompiledObject: best
   Install: false
-  BuildDepends: ec2
+  BuildDepends: lwt, ec2
