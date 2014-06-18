@@ -2,9 +2,9 @@ let service = "ec2"
 		
 let version = "2014-05-01"
 
-let key name = Unix.getenv name
-let iam_secret = key "AWS_SECRET_KEY"
-let iam_access = key "AWS_ACCESS_KEY"
+
+let iam_secret = Unix.getenv "AWS_SECRET_KEY"
+let iam_access = Unix.getenv "AWS_ACCESS_KEY"
 
 module Time = struct
 
@@ -104,32 +104,44 @@ end
 
 module Monad = struct
 
-type request = { meth: Cohttp.Code.meth;
-		 headers: Cohttp.Header.t;
-		 body: Cohttp_lwt_body.t; 
-		 uri: Uri.t;
-		 aws_action: string;
-	       }
+  type request = { meth: Cohttp.Code.meth;
+		   headers: Cohttp.Header.t;
+		   body: Cohttp_lwt_body.t; 
+		   uri: Uri.t;
+		   aws_action: string;
+		 }
 
-type error = string
+  type error = 
+    | Generic of Cohttp.Response.t
+    | No_response
+	
+  type 'a signal = 
+    | Error of error
+    | Response of 'a
+   and 'a t = ('a signal) Lwt.t
+			  
+  let error e = Error e
+		      
+  let response r = Response r
+			    
+  let error_to_string = function
+    | Generic err -> Printf.sprintf "HTTP Error %s" (Cohttp.Code.string_of_status (Cohttp_lwt_unix.Response.status err))
+    | No_response -> "No response"
 
-type 'a signal = 
-  | Error of error
-  | Response of 'a
-and 'a t = ('a signal) Lwt.t
-
-let error e = Error e
-
-let response r = Response r
-
-let error_to_string e = e
-
-let return r = Lwt.return (Response r)
-let fail err = Lwt.return (Error err)
-
-let run x = match_lwt x with
-  | Error e -> Lwt.fail (Failure (error_to_string e))
-  | Response r -> Lwt.return r
+			    
+  let bind x fn = match_lwt x with
+		  | Response r -> fn r
+		  | Error _ as e -> Lwt.return e
+					    
+  let return r = Lwt.return (Response r)
+  let fail err = Lwt.return (Error err)
+   
+  let run x = match_lwt x with
+	      | Error e -> Lwt.fail (Failure (error_to_string e))
+	      | Response r -> Lwt.return r
+					 
+  let (>>=) = bind
+		
 end
 
 module API = struct
@@ -168,7 +180,7 @@ module API = struct
       let r = fn body in
       Lwt.return (Monad.response r)
       with exn ->
-	Lwt.return (Monad.error "bad response?")
+	Lwt.return Monad.(error (Generic envelope))
 
   let lwt_req {Monad.meth; headers; body; uri; aws_action} = 
     Cohttp_lwt_unix.Client.call ~headers ~body ~chunked:false meth uri
