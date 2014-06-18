@@ -104,14 +104,32 @@ end
 
 module Monad = struct
 
-type error = 
-  | Generic of Cohttp_lwt_unix.Response.t
+type request = { meth: Cohttp.Code.meth;
+		 headers: Cohttp.Header.t;
+		 body: Cohttp_lwt_body.t; 
+		 uri: Uri.t;
+		 aws_action: string;
+	       }
 
-let error_to_string = function
-  | Generic res -> Printf.sprintf "HTTP Error %s" (Cohttp.Code.string_of_status (Cohttp_lwt_unix.Response.status res))
+type error = string
 
+type 'a signal = 
+  | Error of error
+  | Response of 'a
+and 'a t = ('a signal) Lwt.t
 
+let error e = Error e
 
+let response r = Response r
+
+let error_to_string e = e
+
+let return r = Lwt.return (Response r)
+let fail err = Lwt.return (Error err)
+
+let run x = match_lwt x with
+  | Error e -> Lwt.fail (Failure (error_to_string e))
+  | Response r -> Lwt.return r
 end
 
 module API = struct
@@ -138,32 +156,41 @@ module API = struct
 					; ("Signature", signature) 
 					]
 	       |> String.concat ", " in
-    Cohttp.Header.of_list [ "Authorization", auth
-			  ; "Content-Type", content_type
-			  ; "X-Amz-Date", Time.date_time timestamp 
-			  ]
-			  
-  let make_req meth headers body uri = Cohttp_lwt_unix.Client.call ~headers ~body ~chunked:false meth uri
-
-  (* do we really want Lwt_main.run here *)
+    Cohttp.Header.of_list [ "Authorization", auth;
+			    "Content-Type", content_type;
+			    "X-Amz-Date", Time.date_time timestamp; ]
+	
   let handle_response action fn (envelope,body) = 
-    (*let body = Lwt_main.run (Cohttp_lwt_body.to_string body) in*)
-    lwt body = Cohttp_lwt_body.to_string body in
-    let (_,body) = Ezxmlm.from_string body in
-    let resp = action^"Response" in
-    let body = Ezxmlm.member resp body in
-    let parse b = Lwt.return (fn b) in
-    parse body 
-	     
-  let verb meth action fn ?(region="us-east-1") ~params =
+    try_lwt
+      lwt body = Cohttp_lwt_body.to_string body in
+      let (_,body) = Ezxmlm.from_string body in
+      let body = Ezxmlm.member (action^"Response") body in
+      let r = fn body in
+      Lwt.return (Monad.response r)
+      with exn ->
+	Lwt.return (Monad.error "bad response?")
+
+  let lwt_req {Monad.meth; headers; body; uri; aws_action} = 
+    Cohttp_lwt_unix.Client.call ~headers ~body ~chunked:false meth uri
+
+  let request fn req = 
+    lwt resp = lwt_req req in
+    handle_response req.aws_action fn resp
+
+  (* TODO default region not working *)
+  let verb meth action fn ?(region="us-east-1") ~params = 
     let params = param_list action ~params in
     let headers = realize_headers meth action ~params ~region in
     let body = realize_body params in
     let uri = URI.base region in
-    Lwt.bind (make_req meth headers body uri) (handle_response action fn)
-	     
+    request fn Monad.({ meth = meth;
+		 headers = headers;
+		 body = body;
+		 uri = uri;
+		 aws_action = action; })
+	    
   let get action (fn: Ezxmlm.nodes -> 'a) = verb `GET action fn
-		 
+ 
   let post action (fn: Ezxmlm.nodes -> 'a) = verb `POST action fn
 		  
 end
@@ -173,31 +200,31 @@ open EC2_x
 
 module AMI = struct
  
-  let deregister_image id =
+  let deregister_image id ?region () =
     let params = [("ImageId", id)] in
-    API.get "DeregisterImage" ~params dereg_img_of_string
+    API.get "DeregisterImage" ~params (dereg_img_of_string : Ezxmlm.nodes -> 'a) ?region
 
-  let register_image name ?image =
+  let register_image name ?image ?region () =
     let params = ("Name", name) in
     let params = match image with
       | Some image -> params::[("ImageLocation", image)]
       | None -> [params] in
-    API.get "RegisterImage" ~params reg_img_of_string
+    API.get "RegisterImage" ~params (reg_img_of_string : Ezxmlm.nodes -> 'a) ?region
  
 end 
 
 module EBS = struct
 
-  let create_snapshot ?description id =
+  let create_snapshot ?description id ?region () =
     let params = ("VolumeId", id) in
     let params = match description with
       | Some description -> params::[("Description", description)]
       | None -> [params] in
-    API.get "CreateSnapshot" ~params create_snap_of_string
+    API.get "CreateSnapshot" ~params create_snap_of_string ?region
 	     
-  let delete_volume id =
+  let delete_volume id ?region () =
     let params = [("VolumeId", id)] in
-    API.post "DeleteVolume" ~params delete_vol_of_string
+    API.post "DeleteVolume" ~params delete_vol_of_string ?region
 
 end
 	       
@@ -209,14 +236,14 @@ module Instances = struct
     let params = match ids with 
       | Some ids -> params::(Field.number_fields "InstanceId.%i" ids) 
       | None -> [params] in
-    API.get "DescribeInstanceStatus" ~params
+    API.get "DescribeInstanceStatus" ~params 
  *)
-  let get_console_output id =
+  let get_console_output id ?region () =
     let params = [("InstanceId", id)] in
-    API.get "GetConsoleOutput" ~params console_output_of_string
+    API.get "GetConsoleOutput" ~params console_output_of_string ?region
 
   (* TODO this function has 1000 request parameters *)
-  let run ?(min=1) ?(max=1) ?(instance="m1.small") ?zone ?kernel id =
+  let run ?(min=1) ?(max=1) ?(instance="m1.small") ?zone ?kernel id ?region () =
     let params = match zone with
       | Some zone -> [("Placement.AvailabilityZone", zone)]
       | None -> [] in
@@ -224,26 +251,26 @@ module Instances = struct
       | Some kernel -> ("KernelId", kernel)::params
       | None -> params in
     let params = params@[("ImageId", id); ("MinCount", string_of_int min); ("MaxCount", string_of_int max)] in
-    API.get "RunInstances" ~params run_instances_of_string
+    API.get "RunInstances" ~params run_instances_of_string ?region
 
-  let start (ids : string list) =
+  let start (ids : string list) ?region () =
     let params = Field.number_fields "InstanceId.%i" ids in
-    API.get "StartInstances" ~params start_instances_of_string
+    API.get "StartInstances" ~params start_instances_of_string ?region
 
-  let stop ?(force=false) (ids : string list) =
+  let stop ?(force=false) (ids : string list) ?region () =
     let params = ("Force", string_of_bool force) in
     let params = params::(Field.number_fields "InstanceId.%i" ids) in
-    API.get "StopInstances" ~params stop_instances_of_string
+    API.get "StopInstances" ~params stop_instances_of_string ?region
 
-  let terminate (ids : string list) = 
+  let terminate (ids : string list) ?region () = 
     let params = Field.number_fields "InstanceId.%i" ids in
-    API.get "TerminateInstances" ~params terminate_instances_of_string 
+    API.get "TerminateInstances" ~params terminate_instances_of_string ?region
 
 end 
 
 module Regions = struct
   
-  let describe = 
-    API.get "DescribeRegions" ~params:[] desc_regions_of_string
+  let describe ?region () =
+    API.get "DescribeRegions" ~params:[] ?region desc_regions_of_string
 	    
 end
