@@ -6,6 +6,7 @@ module Monad : sig
   val (>>=) : 'a t -> ('a -> 'b t) -> 'b t
 end
 module AMI : sig
+  (* val create_image : *)
    (* val deregister_image : EC2_t.img_id -> ?region:string -> bool Lwt.t*)
     val deregister_image : string -> ?region:string -> unit -> bool Monad.t
     val register_image : string -> ?image:string -> ?region:string -> unit -> string Monad.t	  

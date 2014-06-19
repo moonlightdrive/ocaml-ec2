@@ -20,3 +20,11 @@ Executable describe_regions
   CompiledObject: best
   Install: false
   BuildDepends: lwt, ec2	
+
+Executable mirage_kernel
+  Path: lib_test
+  MainIs: mirage_kernel.ml
+  Custom: true
+  CompiledObject: best
+  Install: false
+  BuildDepends: lwt, ec2

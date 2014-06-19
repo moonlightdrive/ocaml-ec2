@@ -123,7 +123,7 @@ module Monad = struct
   let response r = Response r
 			    
   let error_to_string = function
-    | Generic err -> Printf.sprintf "HTTP Error %s\n" (Cohttp.Code.string_of_status (Cohttp.Response.status err))
+    | Generic err -> Printf.sprintf "HTTP Error %s\n" (Cohttp.Code.string_of_status (Cohttp.Response.status err)) (* TODO print the AWS error *)
     | No_response -> "No response"
 
   let bind x fn = match_lwt x with
