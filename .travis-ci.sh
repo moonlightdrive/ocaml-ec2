@@ -1,4 +1,4 @@
-OPAM_DEPENDS="ssl lwt cohttp ezxmlm uri cryptokit core_extended"
+OPAM_DEPENDS="ssl lwt cohttp ezxmlm uri cryptokit"
 
 case "$OCAML_VERSION,$OPAM_VERSION" in
 4.00.1,1.0.0) ppa=avsm/ocaml40+opam10 ;;
