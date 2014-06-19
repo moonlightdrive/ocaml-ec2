@@ -8,16 +8,14 @@ let iam_access = Unix.getenv "AWS_ACCESS_KEY"
 
 module Time = struct
 
-  open Core_extended.Std
+  module C = CalendarLib.Calendar
+  module P = CalendarLib.Printer.Calendar
 
-  let date_yymmdd timestamp = Time.format timestamp "%Y%m%d"
+  let date_yymmdd = P.sprint "%Y%m%d"
 
-  let date_time timestamp = Time.format timestamp "%Y%m%dT%H%M%SZ"
+  let date_time = P.sprint "%Y%m%dT%H%M%SZ"
 
-  (* TODO this is a horrible way to handle this *)
-  let now_utc =
-    let now = Time.now () in
-    Time.sub now (Time.utc_offset now) 
+  let now_utc = C.(now () |> to_gmt)
 
 end
 
@@ -49,17 +47,17 @@ module Field = struct
   let to_string (f,v) = Printf.sprintf "%s=%s" f v
 
   (* Turns ["Action","act";"Version","2014"] into "Action=act&Version=2014" *)
-  let query_string param_list = 
-    let open Core.Std in (* is this necessary *)
-    List.map ~f:to_string param_list |>
-      List.intersperse ~sep:"&" |>
-      String.concat ~sep:"" 
+  let query_string params = 
+    List.map to_string params |> String.concat "&"
 
   (* Turns "RegionNames.%i" ["eu-west-1";"us-east-1"] into
      [("RegionNames.1","eu-west-1"); ("RegionNames.2","us-east-1")] *)
   let number_fields pattern values =
-    let names = Core.Std.List.init (List.length values) ~f:(fun n -> Printf.sprintf pattern (n+1)) in
-    Core.Std.List.zip_exn names values 
+    let rec number values n = match values with (* is this efficient *)
+      | [] -> []
+      | (v::vs) -> Printf.sprintf pattern n :: (number vs (n+1)) in
+    let names = number values 1 in
+    List.combine names values
 
 (*
   let add_param ?value name params = match value with 
@@ -125,16 +123,17 @@ module Monad = struct
   let response r = Response r
 			    
   let error_to_string = function
-    | Generic err -> Printf.sprintf "HTTP Error %s" (Cohttp.Code.string_of_status (Cohttp_lwt_unix.Response.status err))
+    | Generic err -> Printf.sprintf "HTTP Error %s\n" (Cohttp.Code.string_of_status (Cohttp.Response.status err))
     | No_response -> "No response"
 
-			    
   let bind x fn = match_lwt x with
-		  | Response r -> fn r
-		  | Error _ as e -> Lwt.return e
-					    
-  let return r = Lwt.return (Response r)
-  let fail err = Lwt.return (Error err)
+    | Response r -> fn r
+    | Error _ as e -> Lwt.return e
+      
+  let return r = Lwt.return (response r)	
+
+  let fail err = Lwt.return (error err)
+
    
   let run x = match_lwt x with
 	      | Error e -> Lwt.fail (Failure (error_to_string e))
