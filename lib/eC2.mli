@@ -5,12 +5,15 @@ module Monad : sig
   val run : 'a t -> 'a Lwt.t
   val (>>=) : 'a t -> ('a -> 'b t) -> 'b t
 end
-module AMI :
-  sig
+module AMI : sig
    (* val deregister_image : EC2_t.img_id -> ?region:string -> bool Lwt.t*)
     val deregister_image : string -> ?region:string -> unit -> bool Monad.t
     val register_image : string -> ?image:string -> ?region:string -> unit -> string Monad.t	  
 end
+module EBS : sig
+  val create_snapshot : ?description:string -> string -> ?region:string -> unit -> EC2_t.create_snapshot Monad.t
+  val delete_volume : string -> ?region:string -> unit -> bool Monad.t
+end 
 module Instances :
 sig
   (*    val describe_status : ?ids:string list -> ?all:bool -> ?region:string -> ___ Lwt.t *)
