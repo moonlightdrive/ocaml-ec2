@@ -115,22 +115,21 @@ let verb meth obj=
 				      ]
 	     |> String.concat ", " in  
   let headers = Cohttp.Header.of_list [ "x-amz-date", Time.date_time timestamp; 
-				(*	"Host", host;*)
 					"Authorization", auth;  
 					"Content-Type", content_type;
 					"x-amz-content-sha256", Hash.hex_hash obj;
+					"User-Agent", "ocaml-ec2"
 				      ] in
   let body = Cohttp_lwt_body.of_string (body) in
 (*  let uri = Uri.with_path (Uri.of_string ("https://"^host)) ("/"^obj) in*)
   let uri = Uri.of_string "https://jymirage.s3.amazonaws.com/" in
-  let req = Cohttp_lwt_unix.Client.call ~headers ~body ~chunked:false meth uri in
-(*  req*)
+  let req = Cohttp_lwt_unix.Client.call (*~headers*) ~body ~chunked:false meth uri in
   let curl = "curl -v -X "^(Cohttp.Code.string_of_method meth)
 	     ^ " -d "^obj
-	     ^ " -H x-amz-date=\""^(Time.date_time timestamp)^"\""
-	     ^ " -H Authorization=\""^auth^"\""
-	     ^ " -H Content-type=\""^content_type^"\""
-	     ^ " -H x-amz-content-sha256=\""^(Hash.hex_hash obj)^"\""
+	     ^ " -H x-amz-date:\""^(Time.date_time timestamp)^"\""
+	     ^ " -H Authorization:\""^auth^"\""
+	     ^ " -H Content-type:\""^content_type^"\""
+	     ^ " -H x-amz-content-sha256:\""^(Hash.hex_hash obj)^"\""
 	     ^ " https://jymirage.s3.amazonaws.com/" in
   print_endline curl 
 
@@ -142,8 +141,10 @@ let put obj = verb `PUT obj
 (*
 let _ = 
   let (_,resp_body) = Lwt_main.run (get "mirage.image.manifest.xml") in
-  Lwt.bind (Cohttp_lwt_body.to_string resp_body) Lwt_io.print
+  Lwt.bind (Cohttp_lwt_body.to_string resp_body) Lwt_io.print 
  *)
+ 
 
 let _ = get "mirage.image.manifest.xml"
 
+ 
