@@ -2,7 +2,6 @@ let service = "ec2"
 		
 let version = "2014-05-01"
 
-
 let iam_secret = Unix.getenv "AWS_SECRET_KEY"
 let iam_access = Unix.getenv "AWS_ACCESS_KEY"
 
@@ -133,8 +132,7 @@ module Monad = struct
   let return r = Lwt.return (response r)	
 
   let fail err = Lwt.return (error err)
-
-   
+  
   let run x = match_lwt x with
 	      | Error e -> Lwt.fail (Failure (error_to_string e))
 	      | Response r -> Lwt.return r
@@ -189,7 +187,7 @@ module API = struct
     handle_response req.aws_action fn resp
 
   (* TODO default region not working *)
-  let verb meth action fn ?(region="us-east-1") ~params = 
+  let verb meth action fn ?(region="us-east-1") ~params =
     let params = param_list action ~params in
     let headers = realize_headers meth action ~params ~region in
     let body = realize_body params in
@@ -200,9 +198,9 @@ module API = struct
 		 uri = uri;
 		 aws_action = action; })
 	    
-  let get action (fn: Ezxmlm.nodes -> 'a) = verb `GET action fn
+  let get action fn = verb `GET action fn
  
-  let post action (fn: Ezxmlm.nodes -> 'a) = verb `POST action fn
+  let post action fn = verb `POST action fn
 		  
 end
 
@@ -213,14 +211,14 @@ module AMI = struct
  
   let deregister_image id ?region () =
     let params = [("ImageId", ImageID.to_string id)] in
-    API.get "DeregisterImage" ~params (dereg_img_of_string : Ezxmlm.nodes -> 'a) ?region
+    API.get "DeregisterImage" ~params dereg_img_of_string ?region
 
   let register_image ~name ?img_path ?region () =
     let params = ("Name", name) in
     let params = match img_path with
       | Some img_path -> params::[("ImageLocation", img_path)]
       | None -> [params] in
-    API.get "RegisterImage" ~params (reg_img_of_string : Ezxmlm.nodes -> 'a) ?region
+    API.get "RegisterImage" ~params reg_img_of_string ?region
  
 end 
 
