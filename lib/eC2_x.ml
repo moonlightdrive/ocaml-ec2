@@ -8,7 +8,7 @@ let success xml = bool_of_string (string_of_member "return" xml)
 
 let dereg_img_of_string = success
 
-let reg_img_of_string = string_of_member "imageId"
+let reg_img_of_string x = string_of_member "imageId" x |> ImageID.of_string
 
 let create_snap_of_string x =
   { snapshot = member "snapshotId" x |> data_to_string;

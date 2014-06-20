@@ -1,4 +1,13 @@
+module type ID = sig
+  type t
+  val of_string : string -> t
+  val to_string : t -> string
+end 
 
+module ImageID : ID
+module InstanceID : ID
+module VolumeID : ID
+ 
 type time = string
 	      
 type successful = bool

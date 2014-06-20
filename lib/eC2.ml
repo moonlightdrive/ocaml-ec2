@@ -212,13 +212,13 @@ open EC2_x
 module AMI = struct
  
   let deregister_image id ?region () =
-    let params = [("ImageId", id)] in
+    let params = [("ImageId", ImageID.to_string id)] in
     API.get "DeregisterImage" ~params (dereg_img_of_string : Ezxmlm.nodes -> 'a) ?region
 
-  let register_image name ?image ?region () =
+  let register_image ~name ?img_path ?region () =
     let params = ("Name", name) in
-    let params = match image with
-      | Some image -> params::[("ImageLocation", image)]
+    let params = match img_path with
+      | Some img_path -> params::[("ImageLocation", img_path)]
       | None -> [params] in
     API.get "RegisterImage" ~params (reg_img_of_string : Ezxmlm.nodes -> 'a) ?region
  
@@ -226,15 +226,15 @@ end
 
 module EBS = struct
 
-  let create_snapshot ?description id ?region () =
-    let params = ("VolumeId", id) in
+  let create_snapshot id ?description ?region () =
+    let params = ("VolumeId", VolumeID.to_string id) in
     let params = match description with
       | Some description -> params::[("Description", description)]
       | None -> [params] in
     API.get "CreateSnapshot" ~params create_snap_of_string ?region
 	     
   let delete_volume id ?region () =
-    let params = [("VolumeId", id)] in
+    let params = [("VolumeId", VolumeID.to_string id)] in
     API.post "DeleteVolume" ~params delete_vol_of_string ?region
 
 end
@@ -250,7 +250,7 @@ module Instances = struct
     API.get "DescribeInstanceStatus" ~params 
  *)
   let get_console_output id ?region () =
-    let params = [("InstanceId", id)] in
+    let params = [("InstanceId", InstanceID.to_string id)] in
     API.get "GetConsoleOutput" ~params console_output_of_string ?region
 
   (* TODO this function has 1000 request parameters *)
@@ -261,20 +261,25 @@ module Instances = struct
     let params = match kernel with
       | Some kernel -> ("KernelId", kernel)::params
       | None -> params in
-    let params = params@[("ImageId", id); ("MinCount", string_of_int min); ("MaxCount", string_of_int max)] in
+    let params = params@[("ImageId", ImageID.to_string id); 
+			 ("MinCount", string_of_int min); 
+			 ("MaxCount", string_of_int max)] in
     API.get "RunInstances" ~params run_instances_of_string ?region
 
-  let start (ids : string list) ?region () =
-    let params = Field.number_fields "InstanceId.%i" ids in
+  let start ids ?region () =
+    let params = List.map InstanceID.to_string ids |>
+		   Field.number_fields "InstanceId.%i" in
     API.get "StartInstances" ~params start_instances_of_string ?region
 
-  let stop ?(force=false) (ids : string list) ?region () =
+  let stop ?(force=false) ids ?region () =
     let params = ("Force", string_of_bool force) in
-    let params = params::(Field.number_fields "InstanceId.%i" ids) in
+    let params = List.map InstanceID.to_string ids |> 
+		   fun ids -> params::(Field.number_fields "InstanceId.%i" ids) in
     API.get "StopInstances" ~params stop_instances_of_string ?region
 
-  let terminate (ids : string list) ?region () = 
-    let params = Field.number_fields "InstanceId.%i" ids in
+  let terminate ids ?region () = 
+    let params = List.map InstanceID.to_string ids |>
+		   Field.number_fields "InstanceId.%i" in
     API.get "TerminateInstances" ~params terminate_instances_of_string ?region
 
 end 
