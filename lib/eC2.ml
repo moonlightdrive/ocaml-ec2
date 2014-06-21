@@ -83,7 +83,7 @@ module API = struct
     let timestamp = Time.now_utc in
     let host = match Uri.host uri with
       | Some h -> h
-      | None -> "ec2.us-east-1.amazonaws.com" in (* TODO don't hardcode this?? *)
+      | None -> "ec2.amazonaws.com" in (* TODO don't hardcode this?? *)
     let secret = iam_secret in
     let access = iam_access in
     let cred_scope = credential_scope timestamp region api.service in
