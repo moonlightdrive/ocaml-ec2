@@ -78,7 +78,7 @@ module API = struct
     let remove_path s = String.sub s 2 (String.length s -2) in
     remove_path (Uri.path_and_query uri)
 
-  let realize_headers meth uri api region =
+  let realize_headers meth uri body_str api region =
     let open Signature in 
     let timestamp = Time.now_utc in
     let host = match Uri.host uri with
@@ -88,8 +88,7 @@ module API = struct
     let access = iam_access in
     let cred_scope = credential_scope timestamp region api.service in
     let credentials = access^"/"^cred_scope in
-    let body = query uri in
-    let canonical_req = canonical_request meth ~timestamp ~host ~payload:body () in
+    let canonical_req = canonical_request meth ~timestamp ~host ~payload:body_str () in
     let str_to_sign = str_to_sign ~timestamp ~cred_scope ~req:canonical_req in
     let signature = signature ~secret ~timestamp ~region str_to_sign api.service in
     let auth = List.map Field.to_string [ (signing_algorithm^" Credential", credentials)
@@ -112,7 +111,6 @@ module API = struct
 	Lwt.return Monad.(error (Generic envelope))
 
   let lwt_req {Monad.api; body; headers; meth; uri} =
-    let uri = Uri.of_string "https://ec2.us-east-1.amazonaws.com/" in
     Cohttp_lwt_unix.Client.call ~headers ~body ~chunked:false meth uri
 
   let request action fn req = 
@@ -122,13 +120,12 @@ module API = struct
   (* TODO default region not working *)
   let verb meth action fn ?(region="us-east-1") ~params = 
     let uri = Uri.of_string (Printf.sprintf "https://ec2.%s.amazonaws.com/" region) in
-    let uri = Uri.with_query' uri
-			      (List.rev_append [ "Action", action; "Version", version ] params) in
     let api = { service = service; version = version; } in
-    let body = Cohttp_lwt_body.of_string (query uri) in
-    let headers = realize_headers meth uri api region in
+    let body = Field.query_string (List.rev_append ["Action",action; "Version", api.version] 
+						   params) in
+    let headers = realize_headers meth uri body api region in
     request action fn Monad.({ api = api;
-			       body = body;
+			       body = Cohttp_lwt_body.of_string body;
 			       headers = headers;
 			       meth = meth;
 			       uri = uri; })
