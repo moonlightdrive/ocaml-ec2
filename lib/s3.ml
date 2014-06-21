@@ -93,8 +93,7 @@ module Signature = struct
 end
 
 let uri bucket = Printf.sprintf "%s.s3.amazonaws.com/" bucket
-
-(*let obj = "mir-img.manifest.xml" *)
+ 
 
 let verb meth obj= 
   let open Signature in
@@ -105,7 +104,7 @@ let verb meth obj=
   let cred_scope = credential_scope timestamp region in
   let credentials = access^"/"^cred_scope in
   let body = obj in
-  let host = uri "jymirage" in
+  let host = "jymirage.s3.amazonaws.com" in
   let canonical_req = canonical_request meth ~timestamp ~host ~payload:body () in
   let str_to_sign = str_to_sign ~timestamp ~cred_scope ~req:canonical_req in
   let signature = signature ~secret ~timestamp ~region str_to_sign in
@@ -123,7 +122,7 @@ let verb meth obj=
   let body = Cohttp_lwt_body.of_string (body) in
 (*  let uri = Uri.with_path (Uri.of_string ("https://"^host)) ("/"^obj) in*)
   let uri = Uri.of_string "https://jymirage.s3.amazonaws.com/" in
-  let req = Cohttp_lwt_unix.Client.call (*~headers*) ~body ~chunked:false meth uri in
+  let req = Cohttp_lwt_unix.Client.call ~headers ~body ~chunked:false meth uri in
   let curl = "curl -v -X "^(Cohttp.Code.string_of_method meth)
 	     ^ " -d "^obj
 	     ^ " -H x-amz-date:\""^(Time.date_time timestamp)^"\""
@@ -131,20 +130,14 @@ let verb meth obj=
 	     ^ " -H Content-type:\""^content_type^"\""
 	     ^ " -H x-amz-content-sha256:\""^(Hash.hex_hash obj)^"\""
 	     ^ " https://jymirage.s3.amazonaws.com/" in
-  print_endline curl 
-
+ (* print_endline curl *)
+  req
+ 
 
 let get obj = verb `GET obj
 let put obj = verb `PUT obj
 
-
-(*
 let _ = 
   let (_,resp_body) = Lwt_main.run (get "mirage.image.manifest.xml") in
   Lwt.bind (Cohttp_lwt_body.to_string resp_body) Lwt_io.print 
- *)
- 
-
-let _ = get "mirage.image.manifest.xml"
-
  
