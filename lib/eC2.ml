@@ -1,46 +1,3 @@
-let service = "ec2"
-		
-let version = "2014-05-01"
-
-
-let iam_secret = Unix.getenv "AWS_SECRET_KEY"
-let iam_access = Unix.getenv "AWS_ACCESS_KEY"
-
-module Time = struct
-
-  module C = CalendarLib.Calendar
-  module P = CalendarLib.Printer.Calendar
-
-  let date_yymmdd = P.sprint "%Y%m%d"
-
-  let date_time = P.sprint "%Y%m%dT%H%M%SZ"
-
-  let now_utc = C.(now () |> to_gmt)
-
-end
-
-module Hash = struct
-
-  open Cryptokit
-
-  let hex_encode str = transform_string (Hexa.encode ()) str
-
-  let sha256 ?k str = match k with
-    | None -> hash_string (Hash.sha256 ()) str
-    | Some k -> hash_string (MAC.hmac_sha256 k) str
-
-  let hex_hash ?k str = hex_encode (sha256 ?k str)
-
-end
-
-module URI = struct
-
-  let host region = Printf.sprintf "ec2.%s.amazonaws.com" region
-
-  let base region = Uri.of_string (Printf.sprintf "https://%s/" (host region))
-				      
-end
-
 module Field = struct
 	     
   (* Turns ("Field","value") into "Field=value" *)
@@ -67,47 +24,14 @@ module Field = struct
 	     
 end
 
-module Signature = struct
-
-  let signing_algorithm = "AWS4-HMAC-SHA256"
-
-  let v4_req = "aws4_request"
-
-  let content_type = "application/x-www-form-urlencoded; charset=utf-8"
-
-  let signed_headers = "content-type;host;x-amz-date"
-
-  let canonical_headers ~timestamp host = 
-    let date = Time.date_time timestamp in
-    Printf.sprintf "content-type:%s\nhost:%s\nx-amz-date:%s\n" content_type host date
-		 
-  let canonical_request meth ~timestamp ~host ?(uri = "/") ?(query="") ?(payload="") () =
-    let meth = Cohttp.Code.string_of_method meth in
-    String.concat "\n" [meth; uri; query; canonical_headers timestamp host; signed_headers; Hash.hex_hash payload]
-
-  let credential_scope timestamp region = String.concat "/" [Time.date_yymmdd timestamp; region; service; v4_req]
-
-  let str_to_sign ~timestamp ~cred_scope ~req = 
-    String.concat "\n" [signing_algorithm; Time.date_time timestamp; cred_scope; Hash.hex_hash req]
-
-  let signature ~secret ~timestamp ~region str_to_sign =
-    let kSecret = "AWS4"^secret in
-    let kDate = Hash.sha256 ~k:kSecret (Time.date_yymmdd timestamp) in
-    let kRegion = Hash.sha256 ~k:kDate region in
-    let kService = Hash.sha256 ~k:kRegion service in
-    let kSigning = Hash.sha256 ~k:kService v4_req in
-    Hash.hex_hash ~k:kSigning str_to_sign
-
-end
-
+	 		 
 module Monad = struct
-
-  type request = { meth: Cohttp.Code.meth;
+	       
+  type request = { api: Signature4.api; 
+		   body: Cohttp_lwt_body.t;
 		   headers: Cohttp.Header.t;
-		   body: Cohttp_lwt_body.t; 
-		   uri: Uri.t;
-		   aws_action: string;
-		 }
+		   meth: Cohttp.Code.meth;
+		   uri: Uri.t; }
 
   type error = 
     | Generic of Cohttp.Response.t
@@ -133,7 +57,6 @@ module Monad = struct
   let return r = Lwt.return (response r)	
 
   let fail err = Lwt.return (error err)
-
    
   let run x = match_lwt x with
 	      | Error e -> Lwt.fail (Failure (error_to_string e))
@@ -144,24 +67,31 @@ module Monad = struct
 end
 
 module API = struct
-         
-  let param_list ~params action =
-    List.rev_append ["Action", action; "Version", version] params
 
-  let realize_body field_pairs = Cohttp_lwt_body.of_string (Field.query_string field_pairs)
-				     
-  let realize_headers meth action ~params ~region =
-    let open Signature in
+  let service = "ec2"
+		
+  let version = "2014-05-01"			
+
+  open Signature4
+
+  let query uri = 
+    let remove_path s = String.sub s 2 (String.length s -2) in
+    remove_path (Uri.path_and_query uri)
+
+  let realize_headers meth uri api region =
+    let open Signature in 
     let timestamp = Time.now_utc in
-    let host = URI.host region in
+    let host = match Uri.host uri with
+      | Some h -> h
+      | None -> "ec2.us-east-1.amazonaws.com" in (* TODO don't hardcode this?? *)
     let secret = iam_secret in
     let access = iam_access in
-    let cred_scope = credential_scope timestamp region in
+    let cred_scope = credential_scope timestamp region api.service in
     let credentials = access^"/"^cred_scope in
-    let body = Field.query_string params in
+    let body = query uri in
     let canonical_req = canonical_request meth ~timestamp ~host ~payload:body () in
     let str_to_sign = str_to_sign ~timestamp ~cred_scope ~req:canonical_req in
-    let signature = signature ~secret ~timestamp ~region str_to_sign in
+    let signature = signature ~secret ~timestamp ~region str_to_sign api.service in
     let auth = List.map Field.to_string [ (signing_algorithm^" Credential", credentials)
 					; ("SignedHeaders", signed_headers)
 					; ("Signature", signature) 
@@ -181,24 +111,27 @@ module API = struct
       with exn ->
 	Lwt.return Monad.(error (Generic envelope))
 
-  let lwt_req {Monad.meth; headers; body; uri; aws_action} = 
+  let lwt_req {Monad.api; body; headers; meth; uri} =
+    let uri = Uri.of_string "https://ec2.us-east-1.amazonaws.com/" in
     Cohttp_lwt_unix.Client.call ~headers ~body ~chunked:false meth uri
 
-  let request fn req = 
+  let request action fn req = 
     lwt resp = lwt_req req in
-    handle_response req.aws_action fn resp
+    handle_response action fn resp
 
   (* TODO default region not working *)
   let verb meth action fn ?(region="us-east-1") ~params = 
-    let params = param_list action ~params in
-    let headers = realize_headers meth action ~params ~region in
-    let body = realize_body params in
-    let uri = URI.base region in
-    request fn Monad.({ meth = meth;
-		 headers = headers;
-		 body = body;
-		 uri = uri;
-		 aws_action = action; })
+    let uri = Uri.of_string (Printf.sprintf "https://ec2.%s.amazonaws.com/" region) in
+    let uri = Uri.with_query' uri
+			      (List.rev_append [ "Action", action; "Version", version ] params) in
+    let api = { service = service; version = version; } in
+    let body = Cohttp_lwt_body.of_string (query uri) in
+    let headers = realize_headers meth uri api region in
+    request action fn Monad.({ api = api;
+			       body = body;
+			       headers = headers;
+			       meth = meth;
+			       uri = uri; })
 	    
   let get action (fn: Ezxmlm.nodes -> 'a) = verb `GET action fn
  
