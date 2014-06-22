@@ -23,84 +23,22 @@ module Field = struct
  *)
 	     
 end
-
-	 		 
-module Monad = struct
-	       
-  type request = { api: Signature4.api; 
-		   body: Cohttp_lwt_body.t;
-		   headers: Cohttp.Header.t;
-		   meth: Cohttp.Code.meth;
-		   uri: Uri.t; }
-
-  type error = 
-    | Generic of Cohttp.Response.t
-    | No_response
-	
-  type 'a signal = 
-    | Error of error
-    | Response of 'a
-   and 'a t = ('a signal) Lwt.t
-			  
-  let error e = Error e
-		      
-  let response r = Response r
-			    
-  let error_to_string = function
-    | Generic err -> Printf.sprintf "HTTP Error %s\n" (Cohttp.Code.string_of_status (Cohttp.Response.status err)) (* TODO print the AWS error *)
-    | No_response -> "No response"
-
-  let bind x fn = match_lwt x with
-    | Response r -> fn r
-    | Error _ as e -> Lwt.return e
-      
-  let return r = Lwt.return (response r)	
-
-  let fail err = Lwt.return (error err)
-   
-  let run x = match_lwt x with
-	      | Error e -> Lwt.fail (Failure (error_to_string e))
-	      | Response r -> Lwt.return r
-					 
-  let (>>=) = bind
-		
-end
+	 	
 
 module API = struct
 
   let service = "ec2"
 		
-  let version = "2014-05-01"			
+  let version = "2014-05-01"
 
   open Signature4
 
   let query uri = 
     let remove_path s = String.sub s 2 (String.length s -2) in
     remove_path (Uri.path_and_query uri)
-
-  let realize_headers meth uri body_str api region =
-    let open Signature in 
-    let timestamp = Time.now_utc in
-    let host = match Uri.host uri with
-      | Some h -> h
-      | None -> "ec2.amazonaws.com" in (* TODO don't hardcode this?? *)
-    let secret = iam_secret in
-    let access = iam_access in
-    let cred_scope = credential_scope timestamp region api.service in
-    let credentials = access^"/"^cred_scope in
-    let canonical_req = canonical_request meth ~timestamp ~host ~payload:body_str () in
-    let str_to_sign = str_to_sign ~timestamp ~cred_scope ~req:canonical_req in
-    let signature = signature ~secret ~timestamp ~region str_to_sign api.service in
-    let auth = List.map Field.to_string [ (signing_algorithm^" Credential", credentials)
-					; ("SignedHeaders", signed_headers)
-					; ("Signature", signature) 
-					]
-	       |> String.concat ", " in
-    Cohttp.Header.of_list [ "Authorization", auth;
-			    "Content-Type", content_type;
-			    "X-Amz-Date", Time.date_time timestamp; ]
 	
   let handle_response action fn (envelope,body) = 
+    let open Monad in
     try_lwt
       lwt body = Cohttp_lwt_body.to_string body in
       let (_,body) = Ezxmlm.from_string body in
