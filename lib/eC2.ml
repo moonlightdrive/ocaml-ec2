@@ -77,6 +77,13 @@ open EC2_t
 open EC2_x
 
 module AMI = struct
+
+  let create_image ~name ?description id ?region () = 
+    let params = [("InstanceID", id); ("Name", name)] in
+    let params = match description with
+      | Some description -> [("Description", description)]::params
+      | None -> params in
+    API.get "CreateImage" ~params create_img_of_string ?region
  
   let deregister_image id ?region () =
     let params = [("ImageId", ImageID.to_string id)] in

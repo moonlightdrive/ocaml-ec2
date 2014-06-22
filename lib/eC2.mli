@@ -1,12 +1,16 @@
 module AMI : sig
-  (* val create_image : *)
-    val deregister_image : 
-      EC2_t.ImageID.t -> 
-      ?region:string -> unit -> bool Monad.t
-    val register_image : 
-      name:string -> 
-      ?img_path:string -> 
-      ?region:string -> unit -> EC2_t.ImageID.t Monad.t	  
+  val create_image :
+    name:string ->
+    ?description:string ->
+    EC2_t.InstanceID.t ->
+    ?region:string -> unit -> EC2_t.ImageID.t Monad.t
+  val deregister_image : 
+    EC2_t.ImageID.t -> 
+    ?region:string -> unit -> bool Monad.t
+  val register_image : 
+    name:string -> 
+    ?img_path:string -> 
+    ?region:string -> unit -> EC2_t.ImageID.t Monad.t	  
 end
 module EBS : sig
   val create_snapshot : 
