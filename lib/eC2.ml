@@ -26,14 +26,10 @@ end
 
 module API = struct
 
-  let service = "ec2"	
-  let version = "2014-05-01"
-
   open Signature4
 
-  let query uri = 
-    let remove_path s = String.sub s 2 (String.length s -2) in
-    remove_path (Uri.path_and_query uri)
+  let ec2 = { service = "ec2";
+	      version = "2014-05-01"; }
 	
   let handle_response action fn (envelope,body) = 
     let open Monad in
@@ -54,21 +50,18 @@ module API = struct
     handle_response action fn resp
 
   (* TODO default region not working *)
-
   let verb meth action fn ?(region="us-east-1") ~params = 
     let uri = Uri.of_string (Printf.sprintf "https://ec2.%s.amazonaws.com/" region) in
-    let api = { service = service; version = version; } in
-    let body = Field.query_string (List.rev_append ["Action",action; "Version", api.version] 
+    let body = Field.query_string (List.rev_append ["Action",action; "Version", ec2.version] 
 						   params) in
-    let headers = realize_headers meth uri body api region in
-    request action fn Monad.({ api = api;
+    let headers = realize_headers meth uri body ec2 region in
+    request action fn Monad.({ api = ec2;
 			       body = Cohttp_lwt_body.of_string body;
 			       headers = headers;
 			       meth = meth;
 			       uri = uri; })
 	    
-  let get action fn = verb `GET action fn
- 
+  let get action fn = verb `GET action fn 
   let post action fn = verb `POST action fn
 		  
 end
@@ -79,9 +72,9 @@ open EC2_x
 module AMI = struct
 
   let create_image ~name ?description id ?region () = 
-    let params = [("InstanceID", id); ("Name", name)] in
+    let params = [("InstanceID", InstanceID.to_string id); ("Name", name)] in
     let params = match description with
-      | Some description -> [("Description", description)]::params
+      | Some description -> ("Description", description)::params
       | None -> params in
     API.get "CreateImage" ~params create_img_of_string ?region
  

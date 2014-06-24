@@ -6,6 +6,8 @@ let string_of_member name xml = data_to_string (member name xml)
 let success xml = bool_of_string (string_of_member "return" xml)
 
 
+let create_img_of_string x = string_of_member "imageId" x |> ImageID.of_string
+
 let dereg_img_of_string = success
 
 let reg_img_of_string x = string_of_member "imageId" x |> ImageID.of_string
