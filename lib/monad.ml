@@ -3,9 +3,12 @@ type request = { api: Signature4.api;
 		 headers: Cohttp.Header.t;
 		 meth: Cohttp.Code.meth;
 		 uri: Uri.t; }
+
+type aws_error = { code: string;
+		   msg: string; }
 		 
 type error = 
-  | Generic of Cohttp.Response.t * string
+  | Generic of Cohttp.Response.t * aws_error list
   | No_response
       
 type 'a signal = 
@@ -17,9 +20,13 @@ let error e = Error e
 		    
 let response r = Response r
 			
+let awserrs_to_str errs = 
+  let formatted = List.map (fun e -> Printf.sprintf "%s: %s" e.code e.msg) errs in
+  String.concat "\n" formatted 
+
 let error_to_string = function
   | Generic (http, aws) -> Printf.sprintf "HTTP Error %s\n%s" 
-					  (Cohttp.Code.string_of_status (Cohttp.Response.status http)) aws
+					  (Cohttp.Code.string_of_status (Cohttp.Response.status http)) (awserrs_to_str aws)
   | No_response -> "No response"
 		     
 let bind x fn = match_lwt x with

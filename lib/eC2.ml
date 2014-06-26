@@ -31,6 +31,15 @@ module API = struct
   let ec2 = { service = "ec2";
 	      version = "2014-05-01"; }
 	      
+
+(* Is this the right place for these? *)
+
+  (* This is a misleading name *)
+  let awserr_of_str x = 
+    let open Ezxmlm in
+    Monad.({ code = member "Code" x |> data_to_string;
+	     msg = member "Message" x |> data_to_string ; })
+
   let handle_response action fn (envelope,body) = 
     let open Monad in
       lwt body = Cohttp_lwt_body.to_string body in
@@ -39,11 +48,13 @@ module API = struct
       let body = Ezxmlm.member (action^"Response") body in 
       let r = fn body in
       Lwt.return (Monad.response r)    
-      with exn ->
-	let body = Ezxmlm.to_string (Ezxmlm.member "Response" body) in
-	Lwt.return Monad.(error (Generic (envelope, body)))
-		   
-  let lwt_req {Monad.api; body; headers; meth; uri} =
+	  with exn ->
+	       let body = Ezxmlm.member "Response" body in
+	       let errs = List.map awserr_of_str (Ezxmlm.member "Errors" body 
+						  |> Ezxmlm.members "Error") in
+	       Lwt.return Monad.(error (Generic (envelope, errs)))
+					      
+      let lwt_req {Monad.api; body; headers; meth; uri} =
     Cohttp_lwt_unix.Client.call ~headers ~body ~chunked:false meth uri
 
   let request action fn req = 
