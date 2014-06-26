@@ -16,11 +16,9 @@ module Field = struct
     let names = number values 1 in
     List.combine names values
 
-(*
   let add_param ?value name params = match value with 
     | Some v -> (name, v)::params 
     | None -> params
- *)
 	     
 end
 
@@ -31,15 +29,6 @@ module API = struct
   let ec2 = { service = "ec2";
 	      version = "2014-05-01"; }
 	      
-
-(* Is this the right place for these? *)
-
-  (* This is a misleading name *)
-  let awserr_of_str x = 
-    let open Ezxmlm in
-    Monad.({ code = member "Code" x |> data_to_string;
-	     msg = member "Message" x |> data_to_string ; })
-
   let handle_response action fn (envelope,body) = 
     let open Monad in
       lwt body = Cohttp_lwt_body.to_string body in
@@ -49,6 +38,10 @@ module API = struct
       let r = fn body in
       Lwt.return (Monad.response r)    
 	  with exn ->
+	       let awserr_of_str x = 
+		 let open Ezxmlm in
+		 Monad.({ code = member "Code" x |> data_to_string;
+			  msg = member "Message" x |> data_to_string ; }) in	      
 	       let body = Ezxmlm.member "Response" body in
 	       let errs = List.map awserr_of_str (Ezxmlm.member "Errors" body 
 						  |> Ezxmlm.members "Error") in
@@ -61,7 +54,6 @@ module API = struct
     lwt resp = lwt_req req in
     handle_response action fn resp
 
-  (* TODO default region not working *)
   let verb meth action fn ?(region="us-east-1") ~params = 
     let uri = Uri.of_string (Printf.sprintf "https://ec2.%s.amazonaws.com/" region) in
     let body = Field.query_string (List.rev_append ["Action",action; "Version", ec2.version] 
@@ -85,9 +77,7 @@ module AMI = struct
 
   let create_image ~name ?description id ?region () = 
     let params = [("InstanceID", InstanceID.to_string id); ("Name", name)] in
-    let params = match description with
-      | Some description -> ("Description", description)::params
-      | None -> params in
+    let params = Field.add_param ?value:description "Description" params in
     API.get "CreateImage" ~params create_img_of_string ?region
  
   let deregister_image id ?region () =
@@ -95,10 +85,8 @@ module AMI = struct
     API.get "DeregisterImage" ~params dereg_img_of_string ?region
 
   let register_image ~name ?img_path ?region () =
-    let params = ("Name", name) in
-    let params = match img_path with
-      | Some img_path -> params::[("ImageLocation", img_path)]
-      | None -> [params] in
+    let params = [("Name", name)] in
+    let params = Field.add_param ?value:img_path "ImageLocation" params in
     API.get "RegisterImage" ~params reg_img_of_string ?region
  
 end 
@@ -106,10 +94,8 @@ end
 module EBS = struct
 
   let create_snapshot id ?description ?region () =
-    let params = ("VolumeId", VolumeID.to_string id) in
-    let params = match description with
-      | Some description -> params::[("Description", description)]
-      | None -> [params] in
+    let params = [("VolumeId", VolumeID.to_string id)] in
+    let params = Field.add_param ?value:description "Description" params in
     API.get "CreateSnapshot" ~params create_snap_of_string ?region
 	     
   let delete_volume id ?region () =
@@ -134,12 +120,8 @@ module Instances = struct
 
   (* TODO this function has 1000 request parameters *)
   let run ?(min=1) ?(max=1) ?(instance="m1.small") ?zone ?kernel id ?region () =
-    let params = match zone with
-      | Some zone -> [("Placement.AvailabilityZone", zone)]
-      | None -> [] in
-    let params = match kernel with
-      | Some kernel -> ("KernelId", kernel)::params
-      | None -> params in
+    let params = Field.add_param ?value:zone "Placement.AvailabilityZone" [] in
+    let params = Field.add_param ?value:kernel "KernelId" params in
     let params = params@[("ImageId", ImageID.to_string id); 
 			 ("MinCount", string_of_int min); 
 			 ("MaxCount", string_of_int max)] in
