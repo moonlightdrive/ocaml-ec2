@@ -5,7 +5,7 @@ type request = { api: Signature4.api;
 		 uri: Uri.t; }
 		 
 type error = 
-  | Generic of Cohttp.Response.t
+  | Generic of Cohttp.Response.t * string
   | No_response
       
 type 'a signal = 
@@ -16,9 +16,10 @@ type 'a signal =
 let error e = Error e
 		    
 let response r = Response r
-			  
+			
 let error_to_string = function
-  | Generic err -> Printf.sprintf "HTTP Error %s\n" (Cohttp.Code.string_of_status (Cohttp.Response.status err)) (* TODO print the AWS error *)
+  | Generic (http, aws) -> Printf.sprintf "HTTP Error %s\n%s" 
+					  (Cohttp.Code.string_of_status (Cohttp.Response.status http)) aws
   | No_response -> "No response"
 		     
 let bind x fn = match_lwt x with

@@ -18,7 +18,7 @@ module Field = struct
 
 (*
   let add_param ?value name params = match value with 
-    | Some value -> (name, value)::params 
+    | Some v -> (name, v)::params 
     | None -> params
  *)
 	     
@@ -30,18 +30,19 @@ module API = struct
 
   let ec2 = { service = "ec2";
 	      version = "2014-05-01"; }
-	
+	      
   let handle_response action fn (envelope,body) = 
     let open Monad in
-    try_lwt
       lwt body = Cohttp_lwt_body.to_string body in
       let (_,body) = Ezxmlm.from_string body in
-      let body = Ezxmlm.member (action^"Response") body in
+      try_lwt
+      let body = Ezxmlm.member (action^"Response") body in 
       let r = fn body in
-      Lwt.return (Monad.response r)
+      Lwt.return (Monad.response r)    
       with exn ->
-	Lwt.return Monad.(error (Generic envelope))
-
+	let body = Ezxmlm.to_string (Ezxmlm.member "Response" body) in
+	Lwt.return Monad.(error (Generic (envelope, body)))
+		   
   let lwt_req {Monad.api; body; headers; meth; uri} =
     Cohttp_lwt_unix.Client.call ~headers ~body ~chunked:false meth uri
 
