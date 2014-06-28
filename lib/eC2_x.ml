@@ -52,7 +52,8 @@ let run_instances_of_string x =
   { reservation = string_of_member "reservationId" x;
     owner = string_of_member "ownerId" x;
     (* security group..*)
-    instances = member "instancesSet" x |> members "item" |> List.map running_instances_of_string;
+    instances = member "instancesSet" x |> members "item" 
+		|> List.map running_instances_of_string;
     requester = string_of_member "requesterId" x }					 
 
 let instance_state_change_of_string x = 
@@ -74,5 +75,6 @@ let terminate_instances_of_string x =
  
 let desc_regions_of_string x =
   member "regionInfo" x |> members "item" |>
-    List.map (fun i -> { name = member "regionName" i |> data_to_string;
-			 endpoint = member "regionEndpoint" i |> data_to_string })
+    List.map (fun i -> { name = member "regionName" i |> data_to_string
+				|> region_of_string;
+			 endpoint = member "regionEndpoint" i |> data_to_string; })

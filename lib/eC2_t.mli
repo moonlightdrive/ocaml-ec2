@@ -8,6 +8,15 @@ module ImageID : ID
 module InstanceID : ID
 module VolumeID : ID
  
+type region_name = 
+    US_EAST_1 | US_WEST_2 | US_WEST_1 |
+    EU_WEST_1 | 
+    AP_SOUTHEAST_1 | AP_SOUTHEAST_2 | AP_NORTHEAST_1 |
+    SA_EAST_1
+
+val region_of_string : string -> region_name
+val string_of_region : region_name -> string
+
 type time = string
 	      
 type successful = bool
@@ -57,5 +66,4 @@ type instance_state_change = { id: string;
 			       previous: instance_state; }
 			       
 			       
-type region = { name: string; endpoint: string }
-type describe_regions = region list
+type region = { name: region_name; endpoint: string }
