@@ -34,6 +34,9 @@ let instance_state_of_string x =
   { code = string_of_member "code" x |> int_of_string;
     name = string_of_member "name" x }
 
+let group_of_string item = { id = string_of_member "groupId" item;
+			     name = string_of_member "groupName" item; } 
+
 let running_instances_of_string item = 
   { id = string_of_member "instanceId" item;
     image = string_of_member "imageId" item;
@@ -51,7 +54,8 @@ let running_instances_of_string item =
 let run_instances_of_string x =
   { reservation = string_of_member "reservationId" x;
     owner = string_of_member "ownerId" x;
-    (* security group..*)
+    security_groups = member "groupSet" x |> members "item" |>
+			 List.map group_of_string;
     instances = member "instancesSet" x |> members "item" 
 		|> List.map running_instances_of_string;
     requester = string_of_member "requesterId" x }					 

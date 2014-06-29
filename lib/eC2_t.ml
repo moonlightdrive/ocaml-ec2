@@ -4,9 +4,15 @@ module type ID = sig
   val to_string : t -> string
 end 
 
-module ImageID : ID
-module InstanceID : ID
-module VolumeID : ID
+module ID = struct
+  type t = string
+  let of_string x = x
+  let to_string x = x
+end
+
+module ImageID = ID 
+module InstanceID = ID
+module VolumeID = ID	
  
 type region_name = 
     US_EAST_1 | US_WEST_2 | US_WEST_1 |
@@ -14,8 +20,25 @@ type region_name =
     AP_SOUTHEAST_1 | AP_SOUTHEAST_2 | AP_NORTHEAST_1 |
     SA_EAST_1
 
-val region_of_string : string -> region_name
-val string_of_region : region_name -> string
+let region_of_string = function
+  | "us-east-1" -> US_EAST_1 
+  | "us-west-1" -> US_WEST_1 
+  | "us-west-2" -> US_WEST_2
+  | "eu-west-1" -> EU_WEST_1
+  | "ap-southeast-1" -> AP_SOUTHEAST_1 
+  | "ap-southeast-2" -> AP_SOUTHEAST_2
+  | "ap-northeast-1" -> AP_NORTHEAST_1
+  | "sa-east-1" -> SA_EAST_1
+
+let string_of_region = function
+  | US_EAST_1 -> "us-east-1"
+  | US_WEST_1 -> "us-west-1"
+  | US_WEST_2 -> "us-west-2"
+  | EU_WEST_1 -> "eu-west-1"
+  | AP_SOUTHEAST_1 -> "ap-southeast-1"
+  | AP_SOUTHEAST_2 -> "ap-southeast-2"
+  | AP_NORTHEAST_1 -> "ap-nourtheast-1"
+  | SA_EAST_1 -> "sa-east-1"
 
 type time = string
 	      
@@ -62,7 +85,7 @@ type run_instances = { reservation: string;
 		       owner: string;
 		       security_groups: group_item list;
 		       instances: running_instance list;
-		       requester: string }
+		       requester: string; }
 		       
 type instance_state_change = { id: string; 
 			       current: instance_state;
