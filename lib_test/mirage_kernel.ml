@@ -5,9 +5,9 @@ open EC2_t
 
 let bucket = "jymirage"
 let my_kernel = "mirage.img.manifest.xml"
-let region = "us-west-2"
+let region = US_WEST_2
 
-let t = 
+let t  =
   let img_path = Printf.sprintf "%s/%s" bucket my_kernel in
   Monad.bind (AMI.register_image ~name:"my_new_ami" ~img_path ~region ()) 
 	     (fun id -> Instances.run id ~region ())
