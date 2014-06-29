@@ -2,7 +2,8 @@ open EC2
 open EC2_t
 
 let _ = 
-  let describe_regs = Lwt_main.run (Monad.run (Regions.describe () )) in
+  let filters = [("endpoint",["*ap*";"*west*"])] in
+  let describe_regs = Lwt_main.run (Monad.run (Regions.describe ~filters () )) in
   let print_resp {name; endpoint} = print_endline (Printf.sprintf "%s: %s" 
 								  (string_of_region name) 
 								  endpoint) in 
