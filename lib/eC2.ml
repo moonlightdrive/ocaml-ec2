@@ -14,6 +14,8 @@ module Util = struct
     let names = number values 1 in
     List.combine names values
 		 
+  (* Same as number_fields above but pattern should be something like
+     Printf.sprintf "Region.%i" *)
   let number_fields' pattern values = 
     let rec number values n = match values with
       | [] -> []
@@ -29,12 +31,13 @@ module Util = struct
 		 | (v::vs) -> number_fields' (Printf.sprintf "Filter.%i.Value.%i" i) v
 			      :: number ns vs (i+1) in
     let f_names = List.map fst fs in
-    let f_vals = List.map snd fs in
-    let num_vals = List.concat (number f_names f_vals 1 ) in
+    let num_vals = 
+      let f_vals = List.map snd fs in
+      List.concat (number f_names f_vals 1 ) in
     let num_names = number_fields "Filter.%i.Name" f_names in
     List.rev_append num_vals num_names
 		    
-  let add_param ?value name params = match value with 
+  let add_opt_param ?value name params = match value with 
     | Some v -> (name, v)::params 
     | None -> params
 	     
@@ -98,7 +101,7 @@ module AMI = struct
 
   let create_image ~name ?description id ?region () = 
     let params = [("InstanceID", InstanceID.to_string id); ("Name", name)] in
-    let params = Util.add_param ?value:description "Description" params in
+    let params = Util.add_opt_param ?value:description "Description" params in
     API.get "CreateImage" ~params create_img_of_string ?region
  
   let deregister_image id ?region () =
@@ -107,9 +110,9 @@ module AMI = struct
 
   let register_image ~name ?img_path ?desc ?arch ?region () =
     let params = [("Name", name)] in
-    let params = Util.add_param ?value:img_path "ImageLocation" params 
-		 |> Util.add_param ?value:desc "Description"
-		 |> Util.add_param ?value:arch "Architecture" in
+    let params = Util.add_opt_param ?value:img_path "ImageLocation" params 
+		 |> Util.add_opt_param ?value:desc "Description"
+		 |> Util.add_opt_param ?value:arch "Architecture" in
     API.get "RegisterImage" ~params reg_img_of_string ?region
  
 end 
@@ -118,7 +121,7 @@ module EBS = struct
 
   let create_snapshot id ?description ?region () =
     let params = [("VolumeId", VolumeID.to_string id)] in
-    let params = Util.add_param ?value:description "Description" params in
+    let params = Util.add_opt_param ?value:description "Description" params in
     API.get "CreateSnapshot" ~params create_snap_of_string ?region
 	     
   let delete_volume id ?region () =
@@ -142,8 +145,8 @@ module Instances = struct
     API.get "GetConsoleOutput" ~params console_output_of_string ?region
 
   let run ?(min=1) ?(max=1) ?(instance="m1.small") ?zone ?kernel id ?region () =
-    let params = Util.add_param ?value:zone "Placement.AvailabilityZone" [] in
-    let params = Util.add_param ?value:kernel "KernelId" params in
+    let params = Util.add_opt_param ?value:zone "Placement.AvailabilityZone" [] in
+    let params = Util.add_opt_param ?value:kernel "KernelId" params in
     let params = params@[("ImageId", ImageID.to_string id); 
 			 ("MinCount", string_of_int min); 
 			 ("MaxCount", string_of_int max)] in
