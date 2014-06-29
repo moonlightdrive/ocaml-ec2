@@ -78,7 +78,7 @@ module API = struct
   let verb meth action fn ?region ~params = 
     let region = match region with
       | Some r ->  EC2_t.string_of_region r
-      | None -> try Unix.getenv "REGION" with exn -> EC2_t.string_of_region US_EAST_1 in
+      | None -> try Unix.getenv "REGION" with exn -> EC2_t.(string_of_region US_EAST_1) in
     let uri = Uri.of_string 
 		(Printf.sprintf "https://ec2.%s.amazonaws.com/" region) in
     let body = Util.query_string (List.rev_append ["Action",action; "Version", ec2.version] 
