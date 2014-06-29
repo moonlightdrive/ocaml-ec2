@@ -73,8 +73,14 @@ let terminate_instances_of_string x =
   members "item" x |>
     List.map instance_state_change_of_string
  
+(* KeyPairs *)
+let desc_keys_of_string x = 
+  member "keySet" x |> members "item" |>
+    List.map (fun i -> { name = string_of_member "keyName" i;
+			 fingerprint = string_of_member "keyFingerprint" i; })
+
+(* Regions *)
 let desc_regions_of_string x =
   member "regionInfo" x |> members "item" |>
-    List.map (fun i -> { name = member "regionName" i |> data_to_string
-				|> region_of_string;
-			 endpoint = member "regionEndpoint" i |> data_to_string; })
+    List.map (fun i -> { name = string_of_member "regionName" i |> region_of_string;
+			 endpoint = string_of_member "regionEndpoint" i; })
