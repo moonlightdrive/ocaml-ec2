@@ -9,7 +9,7 @@ module Field = struct
 
   (* Turns "RegionNames.%i" ["eu-west-1";"us-east-1"] into
      [("RegionNames.1","eu-west-1"); ("RegionNames.2","us-east-1")] *)
-  let number_fields pattern values =
+  let number_fields (pattern : string) values =
     let rec number values n = match values with
       | [] -> []
       | (v::vs) -> Printf.sprintf pattern n :: (number vs (n+1)) in
@@ -61,7 +61,10 @@ module API = struct
     lwt resp = lwt_req req in
     handle_response action fn resp
 		      
-  let verb meth action fn ?(region="us-east-1") ~params = 
+  let verb meth action fn ?region ~params = 
+    let region = match region with
+      | None -> try Unix.getenv "REGION" with exn -> "us-east-1"
+      | Some r -> r in
     let uri = Uri.of_string (Printf.sprintf "https://ec2.%s.amazonaws.com/" region) in
     let body = Field.query_string (List.rev_append ["Action",action; "Version", ec2.version] 
 						   params) in
@@ -155,17 +158,22 @@ end
 
 module Regions = struct
   
-(*?filters = 
+  (*?filters = 
 [("endpoint",["*ap*"])] -> "Filter.1.Name=endpoint&Filter.1.Value.1=*ap*"*)
 
+  (* Numbering the filters might be unduly complicated. *)
   let describe ?(regions=[]) ?(filters=[]) ?region () =
     let regions = Field.number_fields "RegionName.%i" (List.map string_of_region regions) in
     let rec number names values i = match names with
       | [] -> []
       | (n::ns) -> match values with
 		   | [] -> []
-		   | (v::vs) -> Field.number_fields' (Printf.sprintf "Filter.%i.Value.%i" i) v :: number ns vs (i+1) in
-    let params = regions in
+		   | (v::vs) -> Field.number_fields' (Printf.sprintf "Filter.%i.Value.%i" i) v 
+				:: number ns vs (i+1) in
+    let number_vals = number (List.map fst filters) (List.map snd filters) 1 in
+    let numbered_names = Field.number_fields "Filter.%i.Name" (List.map fst filters) in
+    let params = List.rev_append regions (List.concat number_vals) 
+		 |> List.rev_append numbered_names in
     API.get "DescribeRegions" ~params ?region desc_regions_of_string
-	    
+ 	    
 end
