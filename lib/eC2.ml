@@ -9,7 +9,7 @@ module Field = struct
 
   (* Turns "RegionNames.%i" ["eu-west-1";"us-east-1"] into
      [("RegionNames.1","eu-west-1"); ("RegionNames.2","us-east-1")] *)
-  let number_fields (pattern : string) values =
+  let number_fields pattern values =
     let rec number values n = match values with
       | [] -> []
       | (v::vs) -> Printf.sprintf pattern n :: (number vs (n+1)) in
@@ -23,6 +23,19 @@ module Field = struct
     let names = number values 1 in
     List.combine names values
 
+  let format_filters fs =
+    let rec number names values i = match names with
+      | [] -> []
+      | n::ns -> match values with
+		 | [] -> []
+		 | (v::vs) -> number_fields' (Printf.sprintf "Filter.%i.Value.%i" i) v
+			      :: number ns vs (i+1) in
+    let f_names = List.map fst fs in
+    let f_vals = List.map snd fs in
+    let num_vals = List.concat (number f_names f_vals 1 ) in
+    let num_names = number_fields "Filter.%i.Name" f_names in
+    List.rev_append num_vals num_names
+		    
   let add_param ?value name params = match value with 
     | Some v -> (name, v)::params 
     | None -> params
@@ -63,8 +76,8 @@ module API = struct
 		      
   let verb meth action fn ?region ~params = 
     let region = match region with
-      | None -> try Unix.getenv "REGION" with exn -> "us-east-1"
-      | Some r -> r in
+      | Some r -> r
+      | None -> try Unix.getenv "REGION" with exn -> "us-east-1" in
     let uri = Uri.of_string (Printf.sprintf "https://ec2.%s.amazonaws.com/" region) in
     let body = Field.query_string (List.rev_append ["Action",action; "Version", ec2.version] 
 						   params) in
@@ -156,6 +169,16 @@ module Instances = struct
 
 end 
 
+module KeyPairs = struct
+
+  let describe ?(names=[]) ?(filters=[]) ?region () = 
+    let params = Field.number_fields "KeyName.%i" names in
+    let params = List.rev_append params
+				 (Field.format_filters filters) in
+    API.get "DescribeKeyPairs" ~params desc_keys_of_string ?region
+
+end
+
 module Regions = struct
   
   (*?filters = 
@@ -164,16 +187,8 @@ module Regions = struct
   (* Numbering the filters might be unduly complicated. *)
   let describe ?(regions=[]) ?(filters=[]) ?region () =
     let regions = Field.number_fields "RegionName.%i" (List.map string_of_region regions) in
-    let rec number names values i = match names with
-      | [] -> []
-      | (n::ns) -> match values with
-		   | [] -> []
-		   | (v::vs) -> Field.number_fields' (Printf.sprintf "Filter.%i.Value.%i" i) v 
-				:: number ns vs (i+1) in
-    let number_vals = number (List.map fst filters) (List.map snd filters) 1 in
-    let numbered_names = Field.number_fields "Filter.%i.Name" (List.map fst filters) in
-    let params = List.rev_append regions (List.concat number_vals) 
-		 |> List.rev_append numbered_names in
+    let filters = Field.format_filters filters in
+    let params = List.rev_append regions filters in
     API.get "DescribeRegions" ~params ?region desc_regions_of_string
  	    
 end

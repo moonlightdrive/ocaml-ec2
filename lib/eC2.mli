@@ -10,6 +10,8 @@ module AMI : sig
   val register_image : 
     name:string -> 
     ?img_path:string -> 
+    ?desc:string ->
+    ?arch:string -> 
     ?region:string -> unit -> EC2_t.ImageID.t Monad.t	  
 end
 module EBS : sig
@@ -45,9 +47,17 @@ sig
   val terminate : 
     EC2_t.InstanceID.t list -> 
     ?region:string -> unit -> EC2_t.instance_state_change list Monad.t
-end										  
+end	
+module KeyPairs : sig
+  val describe :
+    ?names:string list -> 
+    ?filters:(string * string list) list ->
+    ?region:string -> unit -> EC2_t.key_pair list Monad.t
+end									  
 module Regions : sig
   val describe : 
+    ?regions:EC2_t.region_name list ->
+    ?filters:(string * string list) list ->
     ?region:string -> unit -> EC2_t.region list Monad.t
 end
   
