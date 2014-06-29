@@ -1,11 +1,9 @@
-module Field = struct
+module Util = struct
 	     
-  (* Turns ("Field","value") into "Field=value" *)
-  let to_string (f,v) = Printf.sprintf "%s=%s" f v
-
   (* Turns ["Action","act";"Version","2014"] into "Action=act&Version=2014" *)
   let query_string params = 
-    List.map to_string params |> String.concat "&"
+    let string_of_field (f,v) = Printf.sprintf "%s=%s" f v in
+    List.map string_of_field params |> String.concat "&"
 
   (* Turns "RegionNames.%i" ["eu-west-1";"us-east-1"] into
      [("RegionNames.1","eu-west-1"); ("RegionNames.2","us-east-1")] *)
@@ -79,7 +77,7 @@ module API = struct
       | Some r -> r
       | None -> try Unix.getenv "REGION" with exn -> "us-east-1" in
     let uri = Uri.of_string (Printf.sprintf "https://ec2.%s.amazonaws.com/" region) in
-    let body = Field.query_string (List.rev_append ["Action",action; "Version", ec2.version] 
+    let body = Util.query_string (List.rev_append ["Action",action; "Version", ec2.version] 
 						   params) in
     let headers = realize_headers meth uri body ec2 region in
     request action fn Monad.({ api = ec2;
@@ -100,7 +98,7 @@ module AMI = struct
 
   let create_image ~name ?description id ?region () = 
     let params = [("InstanceID", InstanceID.to_string id); ("Name", name)] in
-    let params = Field.add_param ?value:description "Description" params in
+    let params = Util.add_param ?value:description "Description" params in
     API.get "CreateImage" ~params create_img_of_string ?region
  
   let deregister_image id ?region () =
@@ -109,9 +107,9 @@ module AMI = struct
 
   let register_image ~name ?img_path ?desc ?arch ?region () =
     let params = [("Name", name)] in
-    let params = Field.add_param ?value:img_path "ImageLocation" params 
-		 |> Field.add_param ?value:desc "Description"
-		 |> Field.add_param ?value:arch "Architecture" in
+    let params = Util.add_param ?value:img_path "ImageLocation" params 
+		 |> Util.add_param ?value:desc "Description"
+		 |> Util.add_param ?value:arch "Architecture" in
     API.get "RegisterImage" ~params reg_img_of_string ?region
  
 end 
@@ -120,7 +118,7 @@ module EBS = struct
 
   let create_snapshot id ?description ?region () =
     let params = [("VolumeId", VolumeID.to_string id)] in
-    let params = Field.add_param ?value:description "Description" params in
+    let params = Util.add_param ?value:description "Description" params in
     API.get "CreateSnapshot" ~params create_snap_of_string ?region
 	     
   let delete_volume id ?region () =
@@ -135,7 +133,7 @@ module Instances = struct
   let describe_status ?ids ?(all=false) () =
     let params = ("IncludeAllInstances", string_of_bool all) in
     let params = match ids with 
-      | Some ids -> params::(Field.number_fields "InstanceId.%i" ids) 
+      | Some ids -> params::(Util.number_fields "InstanceId.%i" ids) 
       | None -> [params] in
     API.get "DescribeInstanceStatus" ~params 
  *)
@@ -144,8 +142,8 @@ module Instances = struct
     API.get "GetConsoleOutput" ~params console_output_of_string ?region
 
   let run ?(min=1) ?(max=1) ?(instance="m1.small") ?zone ?kernel id ?region () =
-    let params = Field.add_param ?value:zone "Placement.AvailabilityZone" [] in
-    let params = Field.add_param ?value:kernel "KernelId" params in
+    let params = Util.add_param ?value:zone "Placement.AvailabilityZone" [] in
+    let params = Util.add_param ?value:kernel "KernelId" params in
     let params = params@[("ImageId", ImageID.to_string id); 
 			 ("MinCount", string_of_int min); 
 			 ("MaxCount", string_of_int max)] in
@@ -153,18 +151,18 @@ module Instances = struct
 
   let start ids ?region () =
     let params = List.map InstanceID.to_string ids |>
-		   Field.number_fields "InstanceId.%i" in
+		   Util.number_fields "InstanceId.%i" in
     API.get "StartInstances" ~params start_instances_of_string ?region
 
   let stop ?(force=false) ids ?region () =
     let params = ("Force", string_of_bool force) in
     let params = List.map InstanceID.to_string ids |> 
-		   fun ids -> params::(Field.number_fields "InstanceId.%i" ids) in
+		   fun ids -> params::(Util.number_fields "InstanceId.%i" ids) in
     API.get "StopInstances" ~params stop_instances_of_string ?region
 
   let terminate ids ?region () = 
     let params = List.map InstanceID.to_string ids |>
-		   Field.number_fields "InstanceId.%i" in
+		   Util.number_fields "InstanceId.%i" in
     API.get "TerminateInstances" ~params terminate_instances_of_string ?region
 
 end 
@@ -172,23 +170,19 @@ end
 module KeyPairs = struct
 
   let describe ?(names=[]) ?(filters=[]) ?region () = 
-    let params = Field.number_fields "KeyName.%i" names in
+    let params = Util.number_fields "KeyName.%i" names in
     let params = List.rev_append params
-				 (Field.format_filters filters) in
+				 (Util.format_filters filters) in
     API.get "DescribeKeyPairs" ~params desc_keys_of_string ?region
 
 end
 
 module Regions = struct
-  
-  (*?filters = 
-[("endpoint",["*ap*"])] -> "Filter.1.Name=endpoint&Filter.1.Value.1=*ap*"*)
 
-  (* Numbering the filters might be unduly complicated. *)
   let describe ?(regions=[]) ?(filters=[]) ?region () =
-    let regions = Field.number_fields "RegionName.%i" (List.map string_of_region regions) in
-    let filters = Field.format_filters filters in
+    let regions = Util.number_fields "RegionName.%i" (List.map string_of_region regions) in
+    let filters = Util.format_filters filters in
     let params = List.rev_append regions filters in
-    API.get "DescribeRegions" ~params ?region desc_regions_of_string
+    API.get "DescribeRegions" ~params desc_regions_of_string ?region
  	    
 end
