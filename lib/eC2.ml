@@ -10,9 +10,16 @@ module Field = struct
   (* Turns "RegionNames.%i" ["eu-west-1";"us-east-1"] into
      [("RegionNames.1","eu-west-1"); ("RegionNames.2","us-east-1")] *)
   let number_fields pattern values =
-    let rec number values n = match values with (* is this efficient *)
+    let rec number values n = match values with
       | [] -> []
       | (v::vs) -> Printf.sprintf pattern n :: (number vs (n+1)) in
+    let names = number values 1 in
+    List.combine names values
+		 
+  let number_fields' pattern values = 
+    let rec number values n = match values with
+      | [] -> []
+      | (v::vs) -> pattern n :: (number vs (n+1)) in
     let names = number values 1 in
     List.combine names values
 
@@ -31,29 +38,29 @@ module API = struct
 	      
   let handle_response action fn (envelope,body) = 
     let open Monad in
-      lwt body = Cohttp_lwt_body.to_string body in
-      let (_,body) = Ezxmlm.from_string body in
-      try_lwt
+    lwt body = Cohttp_lwt_body.to_string body in
+    let (_,body) = Ezxmlm.from_string body in
+    try_lwt
       let body = Ezxmlm.member (action^"Response") body in 
       let r = fn body in
       Lwt.return (Monad.response r)    
-	  with exn ->
-	       let awserr_of_str x = 
-		 let open Ezxmlm in
-		 Monad.({ code = member "Code" x |> data_to_string;
-			  msg = member "Message" x |> data_to_string ; }) in	      
-	       let body = Ezxmlm.member "Response" body in
-	       let errs = List.map awserr_of_str (Ezxmlm.member "Errors" body 
-						  |> Ezxmlm.members "Error") in
-	       Lwt.return Monad.(error (Generic (envelope, errs)))
-					      
-      let lwt_req {Monad.api; body; headers; meth; uri} =
+      with exn ->
+	let awserr_of_str x = 
+	  let open Ezxmlm in
+	  Monad.({ code = member "Code" x |> data_to_string;
+		   msg = member "Message" x |> data_to_string ; }) in	      
+	let body = Ezxmlm.member "Response" body in
+	let errs = List.map awserr_of_str (Ezxmlm.member "Errors" body 
+					   |> Ezxmlm.members "Error") in
+	Lwt.return Monad.(error (Generic (envelope, errs)))
+		   
+  let lwt_req {Monad.api; body; headers; meth; uri} =
     Cohttp_lwt_unix.Client.call ~headers ~body ~chunked:false meth uri
-
+				
   let request action fn req = 
     lwt resp = lwt_req req in
     handle_response action fn resp
-
+		      
   let verb meth action fn ?(region="us-east-1") ~params = 
     let uri = Uri.of_string (Printf.sprintf "https://ec2.%s.amazonaws.com/" region) in
     let body = Field.query_string (List.rev_append ["Action",action; "Version", ec2.version] 
@@ -84,9 +91,11 @@ module AMI = struct
     let params = [("ImageId", ImageID.to_string id)] in
     API.get "DeregisterImage" ~params dereg_img_of_string ?region
 
-  let register_image ~name ?img_path ?region () =
+  let register_image ~name ?img_path ?desc ?arch ?region () =
     let params = [("Name", name)] in
-    let params = Field.add_param ?value:img_path "ImageLocation" params in
+    let params = Field.add_param ?value:img_path "ImageLocation" params 
+		 |> Field.add_param ?value:desc "Description"
+		 |> Field.add_param ?value:arch "Architecture" in
     API.get "RegisterImage" ~params reg_img_of_string ?region
  
 end 
@@ -118,7 +127,6 @@ module Instances = struct
     let params = [("InstanceId", InstanceID.to_string id)] in
     API.get "GetConsoleOutput" ~params console_output_of_string ?region
 
-  (* TODO this function has 1000 request parameters *)
   let run ?(min=1) ?(max=1) ?(instance="m1.small") ?zone ?kernel id ?region () =
     let params = Field.add_param ?value:zone "Placement.AvailabilityZone" [] in
     let params = Field.add_param ?value:kernel "KernelId" params in
@@ -147,7 +155,17 @@ end
 
 module Regions = struct
   
-  let describe ?region () =
-    API.get "DescribeRegions" ~params:[] ?region desc_regions_of_string
+(*?filters = 
+[("endpoint",["*ap*"])] -> "Filter.1.Name=endpoint&Filter.1.Value.1=*ap*"*)
+
+  let describe ?(regions=[]) ?(filters=[]) ?region () =
+    let regions = Field.number_fields "RegionName.%i" (List.map string_of_region regions) in
+    let rec number names values i = match names with
+      | [] -> []
+      | (n::ns) -> match values with
+		   | [] -> []
+		   | (v::vs) -> Field.number_fields' (Printf.sprintf "Filter.%i.Value.%i" i) v :: number ns vs (i+1) in
+    let params = regions in
+    API.get "DescribeRegions" ~params ?region desc_regions_of_string
 	    
 end
