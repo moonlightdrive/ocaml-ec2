@@ -90,8 +90,8 @@ module API = struct
 			       meth = meth;
 			       uri = uri; })
 	    
-  let get action fn = verb `GET action fn 
-  let post action fn = verb `POST action fn
+  let get action = verb `GET action
+  let post action = verb `POST action 
 		  
 end
 
