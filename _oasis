@@ -10,7 +10,7 @@ Plugins: META (0.4), DevFiles (0.4)
 Library ec2
   Path: lib
   Findlibname: ec2
-  Modules: Monad, EC2, EC2_t
+  Modules: EC2, EC2_t
   InternalModules: Signature4, EC2_x
   BuildDepends: cohttp.lwt, lwt.syntax, cohttp, uri, cryptokit, calendar, threads, ezxmlm
 
@@ -25,14 +25,6 @@ Executable describe_regions
 Executable mirage_kernel
   Path: lib_test
   MainIs: mirage_kernel.ml
-  Custom: true
-  CompiledObject: best
-  Install: false
-  BuildDepends: lwt, ec2
-
-Executable s3_get_object
-  Path: lib_test
-  MainIs: s3_get_object.ml
   Custom: true
   CompiledObject: best
   Install: false

@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: 7b3ff3309c6a211685bd3b69daed7264)
+# DO NOT EDIT (digest: 324e518379f3ce7f38db150ba08349e5)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -46,18 +46,6 @@
 <lib_test/mirage_kernel.{native,byte}>: pkg_threads
 <lib_test/mirage_kernel.{native,byte}>: pkg_uri
 <lib_test/mirage_kernel.{native,byte}>: use_ec2
-<lib_test/mirage_kernel.{native,byte}>: custom
-# Executable s3_get_object
-<lib_test/s3_get_object.{native,byte}>: pkg_calendar
-<lib_test/s3_get_object.{native,byte}>: pkg_cohttp
-<lib_test/s3_get_object.{native,byte}>: pkg_cohttp.lwt
-<lib_test/s3_get_object.{native,byte}>: pkg_cryptokit
-<lib_test/s3_get_object.{native,byte}>: pkg_ezxmlm
-<lib_test/s3_get_object.{native,byte}>: pkg_lwt
-<lib_test/s3_get_object.{native,byte}>: pkg_lwt.syntax
-<lib_test/s3_get_object.{native,byte}>: pkg_threads
-<lib_test/s3_get_object.{native,byte}>: pkg_uri
-<lib_test/s3_get_object.{native,byte}>: use_ec2
 <lib_test/*.ml{,i}>: pkg_calendar
 <lib_test/*.ml{,i}>: pkg_cohttp
 <lib_test/*.ml{,i}>: pkg_cohttp.lwt
@@ -68,5 +56,5 @@
 <lib_test/*.ml{,i}>: pkg_threads
 <lib_test/*.ml{,i}>: pkg_uri
 <lib_test/*.ml{,i}>: use_ec2
-<lib_test/s3_get_object.{native,byte}>: custom
+<lib_test/mirage_kernel.{native,byte}>: custom
 # OASIS_STOP
