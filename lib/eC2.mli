@@ -1,3 +1,11 @@
+module Monad : sig
+  type 'a t
+  val bind : 'a t -> ('a -> 'b t) -> 'b t
+  val return : 'a -> 'a t
+  val run : 'a t -> 'a Lwt.t
+  val (>>=) : 'a t -> ('a -> 'b t) -> 'b t
+end
+
 module AMI : sig
   val create_image :
     name:string ->
