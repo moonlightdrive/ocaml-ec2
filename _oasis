@@ -10,9 +10,15 @@ Plugins: META (0.4), DevFiles (0.4)
 Library ec2
   Path: lib
   Findlibname: ec2
-  Modules: Monad, EC2
+  Modules: Monad, EC2, EC2_t
   InternalModules: Signature4
   BuildDepends: cohttp.lwt, lwt.syntax, cohttp, uri, cryptokit, calendar, threads, ezxmlm
+
+Library ami
+  Path: ami
+  Findlibname: ami
+  Modules: Bundle
+  BuildDepends: ec2, cryptokit, x509, nocrypto, xmlm, lwt, lwt.syntax, cstruct.unix
 
 Executable describe_regions
   Path: lib_test
