@@ -4,12 +4,13 @@ Lwt.(>|=);;
  *)
 
 (* Bundle ami *)
+(*
 #require "cryptokit";;
 
 #require "x509,nocrypto,xmlm";;
 
 #require "lwt,lwt.syntax,cstruct.unix";;
-
+ *)
 
 (* UTILS *)
 let hex = Cryptokit.(transform_string @@ Hexa.encode ())
@@ -182,7 +183,7 @@ let split file =
   ignore @@ Sys.command @@ Printf.sprintf "cp %s %s" file part;
   [part]
 
-let img_of_file ~key ~iv ~cert ~digest ~parts file = 
+let img_of_file ~aeskey ~iv ~cert ~digest ~parts file = 
   let open Filename in
   let name = basename file in
   let bundle = tmp @@ Printf.sprintf "%s.tar.gz.enc" name in
@@ -197,8 +198,8 @@ let img_of_file ~key ~iv ~cert ~digest ~parts file =
       | None -> "/usr/local/ec2/ec2-ami-tools-1.5.3/etc/ec2/amitools/cert-ec2.pem" in 
     pubkey_of_cert ec2_cert in
   let user_pub_key = pubkey_of_cert cert in 
-  let ec2_enc_key = pub_enc ec2_pub_key key in
-  let user_enc_key = pub_enc user_pub_key key in
+  let ec2_enc_key = pub_enc ec2_pub_key aeskey in
+  let user_enc_key = pub_enc user_pub_key aeskey in
   let ec2_enc_iv = pub_enc ec2_pub_key iv in
   let user_enc_iv = pub_enc user_pub_key iv in
 (*  let parts = bundle |> split |> digest_parts in *)
@@ -216,7 +217,7 @@ Pipeline.execute: output = [(stdin)= 37dc731c9f9c71de2310cb249c607726f3d8eabd]
  *)
 let digest_pipe = tmp @@ Printf.sprintf "image-bundle-pipeline-%i" (Unix.getpid ())
 
-let bundle f ~key ~iv () = 
+let bundle f ~aeskey ~iv () = 
   let open Unix in
   let dir = Filename.dirname f in
   let encrypted_dest = tmp @@ Printf.sprintf "%s.tar.gz.enc" (Filename.basename f) in
@@ -228,7 +229,7 @@ let bundle f ~key ~iv () =
       Printf.sprintf "tar %s %s" options files in
     let cmd = Printf.sprintf 
 		"openssl sha1 < %s & %s | tee %s | gzip -9 | openssl enc -e -aes-128-cbc -K %s -iv %s > %s" 
-		digest_pipe tar_expand digest_pipe key iv encrypted_dest in
+		digest_pipe tar_expand digest_pipe aeskey iv encrypted_dest in
     let ic = open_process_in cmd in
     let digest = input_line ic in
     Unix.close_process_in ic;
@@ -263,15 +264,15 @@ let sign keyfile i =
     Nocrypto.RSA.PKCS1.sign ~key
 
 (* TODO return (manifest location * [part locations]) *)
-let manifest_of_file f ~key ~iv ~digest ~parts = 
-  let img = img_of_file ~key ~iv ~cert:my_cert f ~digest ~parts in
+let manifest_of_file f ~key ~cert ~aeskey ~iv ~digest ~parts = 
+  let img = img_of_file ~aeskey ~iv ~cert ~digest ~parts f in
   { version = manivers;
     bundler = bundler;
     machine_config = mymachconf;
     image = img;
-    signature = match sign my_key img with 
+    signature = match sign key img with 
 		| Some s -> Cstruct.to_string s |> hex
-		| None -> raise (Failure "couldn't sign manifest"); }
+		| None -> raise (Failure "error signing manifest"); }
 
 let tree_of_manifest m = 
   el "manifest" [ el "version" [data m.version];
@@ -308,17 +309,22 @@ let clean_up f () =
   ignore @@ List.map (fun s -> Sys.command @@ Printf.sprintf "rm %s" s) to_delete 
 
 (* img -> ~cert -> ~key -> ?ec2_cert -> (xml_manifest, [parts_filenames] *)
-let bundle_img f = 
+let bundle_img ~key ~cert f = 
   Nocrypto.Rng.reseed (Cstruct.of_string "\001\002\003\004");
   let gen_key () = Nocrypto.Rng.generate 16 |> Cstruct.to_string |> hex in
-  let key = gen_key ()
+  let aeskey = gen_key ()
   and iv = gen_key ()  in 
-  let digest = bundle ~key ~iv f () in
+  let digest = bundle ~aeskey ~iv f () in
   let bundle = tmp @@ Printf.sprintf "%s.tar.gz.enc" @@ Filename.basename f in
   let parts = bundle |> split |> digest_parts in
-  let manifestdest = manifest_of_file f ~key ~iv ~digest ~parts |> 
+  let manifestdest = manifest_of_file f ~key ~cert ~aeskey ~iv ~digest ~parts |> 
 		       tree_of_manifest |>
 		       create_manifest (Filename.basename f) in
   clean_up f ();
   let parts_paths = List.map (fun p -> tmp @@ p.filename) parts in
   (manifestdest, parts_paths)
+    
+
+let upload_img (m, ps) ~bucket = 
+  List.map (fun f -> S3.API.put bucket f) (m::ps)
+
