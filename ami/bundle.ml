@@ -182,7 +182,7 @@ let split file =
   ignore @@ Sys.command @@ Printf.sprintf "cp %s %s" file part;
   [part]
 
-let img_of_file ~key ~iv ~cert ~digest file = 
+let img_of_file ~key ~iv ~cert ~digest ~parts file = 
   let open Filename in
   let name = basename file in
   let bundle = tmp @@ Printf.sprintf "%s.tar.gz.enc" name in
@@ -201,7 +201,7 @@ let img_of_file ~key ~iv ~cert ~digest file =
   let user_enc_key = pub_enc user_pub_key key in
   let ec2_enc_iv = pub_enc ec2_pub_key iv in
   let user_enc_iv = pub_enc user_pub_key iv in
-  let parts = bundle |> split |> digest_parts in
+(*  let parts = bundle |> split |> digest_parts in *)
   { name = name; user = user;
     img_type = "machine"; digest = digest;
     size = size; b_size = b_size; 
@@ -263,8 +263,8 @@ let sign keyfile i =
     Nocrypto.RSA.PKCS1.sign ~key
 
 (* TODO return (manifest location * [part locations]) *)
-let manifest_of_file f ~key ~iv ~digest = 
-  let img = img_of_file ~key ~iv ~cert:my_cert f ~digest in
+let manifest_of_file f ~key ~iv ~digest ~parts = 
+  let img = img_of_file ~key ~iv ~cert:my_cert f ~digest ~parts in
   { version = manivers;
     bundler = bundler;
     machine_config = mymachconf;
@@ -284,7 +284,8 @@ let tree_of_manifest m =
 let create_manifest name m = 
   let open Xmlm in
   (* TODO allow user to specify name *)
-  let oc = open_out @@ tmp @@ Printf.sprintf "%s.manifest.xml" name in 
+  let manidest = tmp @@ Printf.sprintf "%s.manifest.xml" name in
+  let oc = open_out manidest in
   let o = make_output (`Channel oc) in
   let out = output o in
   let frag = 
@@ -292,10 +293,11 @@ let create_manifest name m =
     function
     | E (tag, childs) -> `El (tag, childs) 
     | D d -> `Data d in
-  let o_tree = Xmlm.output_tree frag o in
+  let o_tree = output_tree frag o in
   out (`Dtd None);
   o_tree m;
-  close_out oc
+  close_out oc;
+  manidest
 
 let test_img = tmp "mymirage.img"
 
@@ -311,7 +313,13 @@ let bundle_img f =
   let key = gen_key ()
   and iv = gen_key ()  in 
   let digest = bundle ~key ~iv f () in
-  manifest_of_file f ~key ~iv ~digest |> 
-    tree_of_manifest |>
-    create_manifest (Filename.basename f);
-  clean_up ()
+  let bundle = tmp @@ Printf.sprintf "%s.tar.gz.enc" @@ Filename.basename f in
+  let parts = bundle |> split |> digest_parts in
+  let manifestdest = manifest_of_file f ~key ~iv ~digest ~parts |> 
+		       tree_of_manifest |>
+		       create_manifest (Filename.basename f) in
+  clean_up ();
+  let parts_paths = 
+    let path p = tmp @@ p.filename in
+    List.map path parts in
+  (manifestdest, parts_paths)
