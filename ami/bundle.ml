@@ -301,9 +301,10 @@ let create_manifest name m =
 
 let test_img = tmp "mymirage.img"
 
-let clean_up () = 
+let clean_up f () = 
   (* TODO delete the tar.gz.enc file *)
-  let to_delete = [digest_pipe;] in
+  let to_delete = [digest_pipe; 
+		   tmp @@ Printf.sprintf "%s.tar.gz.enc" @@ Filename.basename f] in
   ignore @@ List.map (fun s -> Sys.command @@ Printf.sprintf "rm %s" s) to_delete 
 
 (* img -> ~cert -> ~key -> ?ec2_cert -> (xml_manifest, [parts_filenames] *)
@@ -318,8 +319,6 @@ let bundle_img f =
   let manifestdest = manifest_of_file f ~key ~iv ~digest ~parts |> 
 		       tree_of_manifest |>
 		       create_manifest (Filename.basename f) in
-  clean_up ();
-  let parts_paths = 
-    let path p = tmp @@ p.filename in
-    List.map path parts in
+  clean_up f ();
+  let parts_paths = List.map (fun p -> tmp @@ p.filename) parts in
   (manifestdest, parts_paths)
