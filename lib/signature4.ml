@@ -9,7 +9,7 @@ module Time = struct
 
   let date_time = P.sprint "%Y%m%dT%H%M%SZ"
 
-  let now_utc = C.(now () |> to_gmt)
+  let now_utc () = C.(now () |> to_gmt)
 
 end
 
@@ -36,7 +36,8 @@ module Signature = struct
 
   let v4_req = "aws4_request"
 
-  let content_type = "application/x-www-form-urlencoded; charset=utf-8"
+  let content_type = "application/x-www-form-urlencoded; charset=utf-8" 
+
 
   let signed_headers = "content-type;host;x-amz-date"
 
@@ -63,10 +64,9 @@ module Signature = struct
 
 end
 
-
 let realize_headers meth uri body_str api region =
   let open Signature in 
-  let timestamp = Time.now_utc in
+  let timestamp = Time.now_utc () in
   let host = match Uri.host uri with
     | Some h -> h
     | None -> "ec2.amazonaws.com" in (* TODO don't hardcode this?? *)
@@ -74,7 +74,9 @@ let realize_headers meth uri body_str api region =
   let access = iam_access in
   let cred_scope = credential_scope timestamp region api.service in
   let credentials = access^"/"^cred_scope in
-  let canonical_req = canonical_request meth ~timestamp ~host ~payload:body_str () in
+  let canonical_req = 
+    let path = Uri.path @@ Uri.of_string @@ Uri.to_string uri in
+    canonical_request meth ~uri:path ~timestamp ~host ~payload:body_str () in
   let str_to_sign = str_to_sign ~timestamp ~cred_scope ~req:canonical_req in
   let signature = signature ~secret ~timestamp ~region str_to_sign api.service in
   let to_string (f, v) = Printf.sprintf "%s=%s" f v in
@@ -83,6 +85,13 @@ let realize_headers meth uri body_str api region =
 				      ; ("Signature", signature) 
 				      ]
 	     |> String.concat ", " in
+  print_string "CANONICAL REQ ";
+  print_endline canonical_req;
+  (* the last line in canonical_req is different?? *)
+  print_string "STR TO SIGN ";
+  print_endline str_to_sign;
+  print_string "SIGNATURE ";
+  print_endline signature;
   Cohttp.Header.of_list [ "Authorization", auth;
 			  "Content-Type", content_type;
 			  "X-Amz-Date", Time.date_time timestamp; ]

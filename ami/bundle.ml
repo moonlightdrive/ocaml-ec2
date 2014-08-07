@@ -221,6 +221,7 @@ let bundle f ~aeskey ~iv () =
   let open Unix in
   let dir = Filename.dirname f in
   let encrypted_dest = tmp @@ Printf.sprintf "%s.tar.gz.enc" (Filename.basename f) in
+  (* TODO if things fail this digest pipe isn't being deleted but it needs to be! *)
   mkfifo digest_pipe 0o666;
   let pipeline () = 
     let tar_expand = 
@@ -323,8 +324,7 @@ let bundle_img ~key ~cert f =
   clean_up f ();
   let parts_paths = List.map (fun p -> tmp @@ p.filename) parts in
   (manifestdest, parts_paths)
-    
 
-let upload_img (m, ps) ~bucket = 
-  List.map (fun f -> S3.API.put bucket f) (m::ps)
+let upload (m, ps) ~bucket = 
+  List.map (fun f -> S3.put bucket f ) (m::ps)
 
