@@ -10,21 +10,21 @@ Plugins: META (0.4), DevFiles (0.4)
 Library ec2
   Path: lib
   Findlibname: ec2
-  Modules: EC2, EC2_t
+  Modules: Monad, EC2, EC2_t
   InternalModules: Signature4, EC2_x
   BuildDepends: cohttp.lwt, lwt.syntax, cohttp, uri, cryptokit, calendar, threads, ezxmlm
+
+Library "ec2-ami"
+  Path: ami
+  Findlibname: ami
+  FindlibParent: ec2
+  Modules: Bundle
+  InternalModules: S3
+  BuildDepends: ec2, cryptokit, x509, nocrypto, xmlm, lwt, lwt.syntax, cstruct.unix
 
 Executable describe_regions
   Path: lib_test
   MainIs: describe_regions.ml
-  Custom: true
-  CompiledObject: best
-  Install: false
-  BuildDepends: lwt, ec2	
-
-Executable mirage_kernel
-  Path: lib_test
-  MainIs: mirage_kernel.ml
   Custom: true
   CompiledObject: best
   Install: false

@@ -9,7 +9,7 @@ module Time = struct
 
   let date_time = P.sprint "%Y%m%dT%H%M%SZ"
 
-  let now_utc = C.(now () |> to_gmt)
+  let now_utc () = C.(now () |> to_gmt)
 
 end
 
@@ -36,20 +36,22 @@ module Signature = struct
 
   let v4_req = "aws4_request"
 
-  let content_type = "application/x-www-form-urlencoded; charset=utf-8"
+  let content_type = "application/x-www-form-urlencoded; charset=utf-8" 
 
-  let signed_headers = "content-type;host;x-amz-date"
-
-  let canonical_headers ~timestamp host = 
+  let canonical_headers ?acl ~timestamp host= 
     let date = Time.date_time timestamp in
-    Printf.sprintf "content-type:%s\nhost:%s\nx-amz-date:%s\n" content_type host date
-		 
-  let canonical_request meth ~timestamp ~host ?(uri = "/") ?(query="") ?(payload="") () =
+    let can_heads = 
+      Printf.sprintf "content-type:%s\nhost:%s\n" content_type host in
+    match acl with
+    | None -> Printf.sprintf "%sx-amz-date:%s\n" can_heads date 
+    | Some acl -> Printf.sprintf "%sx-amz-acl:%s\nx-amz-date:%s\n" can_heads acl date
+				 
+  let canonical_request meth ?acl ~timestamp ~host ~signed_headers ?(uri = "/") ?(query="") ?(payload="") () =
     let meth = Cohttp.Code.string_of_method meth in
-    String.concat "\n" [meth; uri; query; canonical_headers timestamp host; signed_headers; Hash.hex_hash payload]
-
+    String.concat "\n" [meth; uri; query; canonical_headers ?acl ~timestamp host; signed_headers; Hash.hex_hash payload]
+		  
   let credential_scope timestamp region service = String.concat "/" [Time.date_yymmdd timestamp; region; service; v4_req]
-
+								
   let str_to_sign ~timestamp ~cred_scope ~req = 
     String.concat "\n" [signing_algorithm; Time.date_time timestamp; cred_scope; Hash.hex_hash req]
 
@@ -63,26 +65,36 @@ module Signature = struct
 
 end
 
-
-let realize_headers meth uri body_str api region =
+let realize_headers ?acl meth uri body_str api region =
   let open Signature in 
-  let timestamp = Time.now_utc in
+  let acl_str = "x-amz-acl" in
+  let signed_headers = ["content-type";"host";"x-amz-date"] |> 
+			 fun sh -> (match acl with | None -> sh | Some acl -> acl_str::sh) |>
+				     List.sort (String.compare) |> String.concat ";" in
+  let timestamp = Time.now_utc () in
   let host = match Uri.host uri with
     | Some h -> h
     | None -> "ec2.amazonaws.com" in (* TODO don't hardcode this?? *)
-  let secret = iam_secret in
+  let secret = iam_secret in 
   let access = iam_access in
   let cred_scope = credential_scope timestamp region api.service in
   let credentials = access^"/"^cred_scope in
-  let canonical_req = canonical_request meth ~timestamp ~host ~payload:body_str () in
+  let canonical_req = 
+    let path = Uri.path @@ Uri.of_string @@ Uri.to_string uri in
+    canonical_request meth ?acl ~uri:path ~timestamp ~host ~signed_headers ~payload:body_str () in
   let str_to_sign = str_to_sign ~timestamp ~cred_scope ~req:canonical_req in
   let signature = signature ~secret ~timestamp ~region str_to_sign api.service in
-  let to_string (f, v) = Printf.sprintf "%s=%s" f v in
-  let auth = List.map to_string [ (signing_algorithm^" Credential", credentials)
-				      ; ("SignedHeaders", signed_headers)
-				      ; ("Signature", signature) 
-				      ]
-	     |> String.concat ", " in
-  Cohttp.Header.of_list [ "Authorization", auth;
-			  "Content-Type", content_type;
-			  "X-Amz-Date", Time.date_time timestamp; ]
+  let auth = 
+    let to_string (f, v) = Printf.sprintf "%s=%s" f v in
+    List.map to_string [ (signing_algorithm^" Credential", credentials)
+		       ; ("SignedHeaders", signed_headers)
+		       ; ("Signature", signature) 
+		       ]
+    |> String.concat ", " in
+  let headers = Cohttp.Header.of_list [ "Authorization", auth;
+					"Content-Type", content_type;
+					"X-Amz-Date", Time.date_time timestamp; ] in
+  match acl with 
+  | None -> headers
+  | Some acl -> Cohttp.Header.add headers acl_str acl
+    
