@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: c08bc725b22c4ea569ab0e9501da9717)
+# DO NOT EDIT (digest: 1dfd99a988721916615ada1741d362e3)
 version = "0.1"
 description = "Amazon EC2 API interface"
 requires =
@@ -9,5 +9,15 @@ archive(byte, plugin) = "ec2.cma"
 archive(native) = "ec2.cmxa"
 archive(native, plugin) = "ec2.cmxs"
 exists_if = "ec2.cma"
+package "ami" (
+ version = "0.1"
+ description = "Amazon EC2 API interface"
+ requires = "ec2 cryptokit x509 nocrypto xmlm lwt lwt.syntax cstruct.unix"
+ archive(byte) = "ec2-ami.cma"
+ archive(byte, plugin) = "ec2-ami.cma"
+ archive(native) = "ec2-ami.cmxa"
+ archive(native, plugin) = "ec2-ami.cmxs"
+ exists_if = "ec2-ami.cma"
+)
 # OASIS_STOP
 

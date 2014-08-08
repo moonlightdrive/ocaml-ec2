@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: 324e518379f3ce7f38db150ba08349e5)
+# DO NOT EDIT (digest: 473e11f25c84508be919e5b4db455558)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -23,6 +23,22 @@
 <lib/*.ml{,i}>: pkg_lwt.syntax
 <lib/*.ml{,i}>: pkg_threads
 <lib/*.ml{,i}>: pkg_uri
+# Library ec2-ami
+"ami/ec2-ami.cmxs": use_ec2-ami
+<ami/*.ml{,i}>: pkg_calendar
+<ami/*.ml{,i}>: pkg_cohttp
+<ami/*.ml{,i}>: pkg_cohttp.lwt
+<ami/*.ml{,i}>: pkg_cryptokit
+<ami/*.ml{,i}>: pkg_cstruct.unix
+<ami/*.ml{,i}>: pkg_ezxmlm
+<ami/*.ml{,i}>: pkg_lwt
+<ami/*.ml{,i}>: pkg_lwt.syntax
+<ami/*.ml{,i}>: pkg_nocrypto
+<ami/*.ml{,i}>: pkg_threads
+<ami/*.ml{,i}>: pkg_uri
+<ami/*.ml{,i}>: pkg_x509
+<ami/*.ml{,i}>: pkg_xmlm
+<ami/*.ml{,i}>: use_ec2
 # Executable describe_regions
 <lib_test/describe_regions.{native,byte}>: pkg_calendar
 <lib_test/describe_regions.{native,byte}>: pkg_cohttp
@@ -34,18 +50,6 @@
 <lib_test/describe_regions.{native,byte}>: pkg_threads
 <lib_test/describe_regions.{native,byte}>: pkg_uri
 <lib_test/describe_regions.{native,byte}>: use_ec2
-<lib_test/describe_regions.{native,byte}>: custom
-# Executable mirage_kernel
-<lib_test/mirage_kernel.{native,byte}>: pkg_calendar
-<lib_test/mirage_kernel.{native,byte}>: pkg_cohttp
-<lib_test/mirage_kernel.{native,byte}>: pkg_cohttp.lwt
-<lib_test/mirage_kernel.{native,byte}>: pkg_cryptokit
-<lib_test/mirage_kernel.{native,byte}>: pkg_ezxmlm
-<lib_test/mirage_kernel.{native,byte}>: pkg_lwt
-<lib_test/mirage_kernel.{native,byte}>: pkg_lwt.syntax
-<lib_test/mirage_kernel.{native,byte}>: pkg_threads
-<lib_test/mirage_kernel.{native,byte}>: pkg_uri
-<lib_test/mirage_kernel.{native,byte}>: use_ec2
 <lib_test/*.ml{,i}>: pkg_calendar
 <lib_test/*.ml{,i}>: pkg_cohttp
 <lib_test/*.ml{,i}>: pkg_cohttp.lwt
@@ -56,5 +60,5 @@
 <lib_test/*.ml{,i}>: pkg_threads
 <lib_test/*.ml{,i}>: pkg_uri
 <lib_test/*.ml{,i}>: use_ec2
-<lib_test/mirage_kernel.{native,byte}>: custom
+<lib_test/describe_regions.{native,byte}>: custom
 # OASIS_STOP
