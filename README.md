@@ -17,6 +17,7 @@ You'll need to export your access and secret keys e.g.
 $ export AWS_ACCESS_KEY=AKIAIOSFODNN7EXAMPLE
 $ export AWS_SECRET_KEY=wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY
 $ export REGION=us-east-1 # optional
+$ export AWS_USER=01234567890 # optional; 12-digit account number without dashes
 ```
 
 # A Utop Session
