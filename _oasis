@@ -12,7 +12,7 @@ Library ec2
   Findlibname: ec2
   Modules: Monad, EC2, EC2_t
   InternalModules: Signature4, EC2_x
-  BuildDepends: cohttp.lwt, lwt.syntax, cohttp, uri, cryptokit, calendar, threads, ezxmlm
+  BuildDepends: cohttp.lwt, lwt.syntax, cohttp, uri, calendar, ezxmlm, cstruct.unix, nocrypto
 
 Library "ec2-ami"
   Path: ami
@@ -30,12 +30,3 @@ Executable describe_regions
   CompiledObject: best
   Install: false
   BuildDepends: lwt, ec2
-
-Executable bundleimg
-  Path: examples
-  MainIs: bundleimg.ml
-  Custom: true
-  CompiledObject: best
-  Install: false
-  BuildDepends: ec2.ami
-

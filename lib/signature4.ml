@@ -15,13 +15,19 @@ end
 
 module Hash = struct
 
-  open Cryptokit
+  open Cstruct
+  open Nocrypto.Hash.SHA256
 
-  let hex_encode str = transform_string (Hexa.encode ()) str
+  let hex_encode str = 
+    let remove ch str = String.concat "" @@ Stringext.split ~on:ch str in
+    let buf = Buffer.create 32 in
+    of_string str |>
+      hexdump_to_buffer buf;
+    remove ' ' @@ remove '\n' @@ Buffer.contents buf
 
   let sha256 ?k str = match k with
-    | None -> hash_string (Hash.sha256 ()) str
-    | Some k -> hash_string (MAC.hmac_sha256 k) str
+    | None -> to_string @@ digest (of_string str)
+    | Some k -> to_string @@ hmac ~key:(of_string k) (of_string str) 
 
   let hex_hash ?k str = hex_encode (sha256 ?k str)
 

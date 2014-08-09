@@ -1,9 +1,9 @@
 # OASIS_START
-# DO NOT EDIT (digest: 1dfd99a988721916615ada1741d362e3)
+# DO NOT EDIT (digest: fa4bb442f6bcc22e6e49b4b697fbeed8)
 version = "0.1"
 description = "Amazon EC2 API interface"
 requires =
-"cohttp.lwt lwt.syntax cohttp uri cryptokit calendar threads ezxmlm"
+"cohttp.lwt lwt.syntax cohttp uri calendar ezxmlm cstruct.unix nocrypto"
 archive(byte) = "ec2.cma"
 archive(byte, plugin) = "ec2.cma"
 archive(native) = "ec2.cmxa"
@@ -12,7 +12,8 @@ exists_if = "ec2.cma"
 package "ami" (
  version = "0.1"
  description = "Amazon EC2 API interface"
- requires = "ec2 cryptokit x509 nocrypto xmlm lwt lwt.syntax cstruct.unix"
+ requires =
+ "ec2 cryptokit x509 nocrypto xmlm lwt lwt.syntax cstruct.unix oasis.base"
  archive(byte) = "ec2-ami.cma"
  archive(byte, plugin) = "ec2-ami.cma"
  archive(native) = "ec2-ami.cmxa"
