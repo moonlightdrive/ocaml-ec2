@@ -141,7 +141,6 @@ let bundler = { name = "ocaml-ec2"; version = "0.1"; release = "0.1"; }
 let mymachconf = { arch = "x86_64"; kernel = "aki-fc8f11cc"; }
 
 
-(* This function is entirely correct *)
 let digest_parts = 
   let digest p = cs_of_file p |> 
 		   fun s -> Nocrypto.Hash.(digest `SHA1 s) |> 
@@ -183,8 +182,10 @@ let img_of_file ~aeskey ~iv ~cert ~digest ~parts ?user file =
   let ec2_pub_key = 
     let ec2_cert = match ec2_cert with 
       | Some c -> c
-      (* TODO this file path *)
-      | None -> "/usr/local/ec2/ec2-ami-tools-1.5.3/etc/ec2/amitools/cert-ec2.pem" in 
+      | None -> let cert = "cert-ec2.pem" in
+		let dir = BaseStandardVar.datadir () 
+		and pkg = BaseStandardVar.pkg_name () in
+		Filename.(concat dir @@ concat pkg cert) in
     pubkey_of_cert ec2_cert in
   let user_pub_key = pubkey_of_cert cert in 
   let ec2_enc_key = pub_enc ec2_pub_key aeskey in
@@ -280,10 +281,7 @@ let create_manifest name m =
   close_out oc;
   manidest
 
-let test_img = tmp "mymirage.img"
-
 let clean_up f () = 
-  (* TODO delete the tar.gz.enc file *)
   let to_delete = [digest_pipe; 
 		   tmp @@ Printf.sprintf "%s.tar.gz.enc" @@ Filename.basename f] in
   ignore @@ List.map (fun s -> Sys.command @@ Printf.sprintf "rm %s" s) to_delete 

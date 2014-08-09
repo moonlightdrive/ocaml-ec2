@@ -20,7 +20,8 @@ Library "ec2-ami"
   FindlibParent: ec2
   Modules: Bundle
   InternalModules: S3
-  BuildDepends: ec2, cryptokit, x509, nocrypto, xmlm, lwt, lwt.syntax, cstruct.unix
+  DataFiles: ec2_certs/*.pem
+  BuildDepends: ec2, cryptokit, x509, nocrypto, xmlm, lwt, lwt.syntax, cstruct.unix, oasis.base
 
 Executable describe_regions
   Path: lib_test
@@ -29,3 +30,12 @@ Executable describe_regions
   CompiledObject: best
   Install: false
   BuildDepends: lwt, ec2
+
+Executable bundleimg
+  Path: examples
+  MainIs: bundleimg.ml
+  Custom: true
+  CompiledObject: best
+  Install: false
+  BuildDepends: ec2.ami
+
