@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: 3b348df671f3ee31ca9a7230c3cb5b8c)
+# DO NOT EDIT (digest: f5fa45168cbb5a22a76653f5815df22f)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -61,4 +61,36 @@
 <lib_test/*.ml{,i}>: pkg_uri
 <lib_test/*.ml{,i}>: use_ec2
 <lib_test/describe_regions.{native,byte}>: custom
+# Executable custom_kernel
+<examples/custom_kernel.{native,byte}>: pkg_calendar
+<examples/custom_kernel.{native,byte}>: pkg_cohttp
+<examples/custom_kernel.{native,byte}>: pkg_cohttp.lwt
+<examples/custom_kernel.{native,byte}>: pkg_cryptokit
+<examples/custom_kernel.{native,byte}>: pkg_cstruct.unix
+<examples/custom_kernel.{native,byte}>: pkg_ezxmlm
+<examples/custom_kernel.{native,byte}>: pkg_lwt
+<examples/custom_kernel.{native,byte}>: pkg_lwt.syntax
+<examples/custom_kernel.{native,byte}>: pkg_nocrypto
+<examples/custom_kernel.{native,byte}>: pkg_oasis.base
+<examples/custom_kernel.{native,byte}>: pkg_uri
+<examples/custom_kernel.{native,byte}>: pkg_x509
+<examples/custom_kernel.{native,byte}>: pkg_xmlm
+<examples/custom_kernel.{native,byte}>: use_ec2
+<examples/custom_kernel.{native,byte}>: use_ec2-ami
+<examples/*.ml{,i}>: pkg_calendar
+<examples/*.ml{,i}>: pkg_cohttp
+<examples/*.ml{,i}>: pkg_cohttp.lwt
+<examples/*.ml{,i}>: pkg_cryptokit
+<examples/*.ml{,i}>: pkg_cstruct.unix
+<examples/*.ml{,i}>: pkg_ezxmlm
+<examples/*.ml{,i}>: pkg_lwt
+<examples/*.ml{,i}>: pkg_lwt.syntax
+<examples/*.ml{,i}>: pkg_nocrypto
+<examples/*.ml{,i}>: pkg_oasis.base
+<examples/*.ml{,i}>: pkg_uri
+<examples/*.ml{,i}>: pkg_x509
+<examples/*.ml{,i}>: pkg_xmlm
+<examples/*.ml{,i}>: use_ec2
+<examples/*.ml{,i}>: use_ec2-ami
+<examples/custom_kernel.{native,byte}>: custom
 # OASIS_STOP

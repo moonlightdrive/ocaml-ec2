@@ -21,7 +21,7 @@ Library "ec2-ami"
   Modules: Bundle
   InternalModules: S3
   DataFiles: ec2_certs/*.pem
-  BuildDepends: ec2, cryptokit, x509, nocrypto, xmlm, lwt, lwt.syntax, cstruct.unix, oasis.base
+  BuildDepends: ec2, x509, nocrypto, xmlm, lwt, lwt.syntax, cstruct.unix, oasis.base
 
 Executable describe_regions
   Path: lib_test
@@ -30,3 +30,11 @@ Executable describe_regions
   CompiledObject: best
   Install: false
   BuildDepends: lwt, ec2
+
+Executable custom_kernel
+  Path: examples
+  MainIs: custom_kernel.ml
+  Custom: true
+  CompiledObject: best
+  Install: false
+  BuildDepends: lwt, ec2, ec2.ami

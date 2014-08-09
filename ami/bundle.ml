@@ -1,5 +1,11 @@
 (* UTILS *)
-let hex = Cryptokit.(transform_string @@ Hexa.encode ())
+let hex str =
+  let open Cstruct in
+  let remove ch str = String.concat "" @@ Stringext.split ~on:ch str in
+  let buf = Buffer.create 32 in
+  of_string str |>
+    hexdump_to_buffer buf;
+  remove ' ' @@ remove '\n' @@ Buffer.contents buf
 
 let tmp = Filename.(concat @@ get_temp_dir_name ())
 
@@ -183,8 +189,8 @@ let img_of_file ~aeskey ~iv ~cert ~digest ~parts ?user file =
     let ec2_cert = match ec2_cert with 
       | Some c -> c
       | None -> let cert = "cert-ec2.pem" in
-		let dir = BaseStandardVar.datadir () 
-		and pkg = BaseStandardVar.pkg_name () in
+		let dir = BaseStandardVar.datadir () in
+		let pkg = BaseStandardVar.pkg_name () in
 		Filename.(concat dir @@ concat pkg cert) in
     pubkey_of_cert ec2_cert in
   let user_pub_key = pubkey_of_cert cert in 
