@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: f5fa45168cbb5a22a76653f5815df22f)
+# DO NOT EDIT (digest: 77680166154961ab40e19b636a7da749)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -28,7 +28,6 @@
 <ami/*.ml{,i}>: pkg_calendar
 <ami/*.ml{,i}>: pkg_cohttp
 <ami/*.ml{,i}>: pkg_cohttp.lwt
-<ami/*.ml{,i}>: pkg_cryptokit
 <ami/*.ml{,i}>: pkg_cstruct.unix
 <ami/*.ml{,i}>: pkg_ezxmlm
 <ami/*.ml{,i}>: pkg_lwt
@@ -65,7 +64,6 @@
 <examples/custom_kernel.{native,byte}>: pkg_calendar
 <examples/custom_kernel.{native,byte}>: pkg_cohttp
 <examples/custom_kernel.{native,byte}>: pkg_cohttp.lwt
-<examples/custom_kernel.{native,byte}>: pkg_cryptokit
 <examples/custom_kernel.{native,byte}>: pkg_cstruct.unix
 <examples/custom_kernel.{native,byte}>: pkg_ezxmlm
 <examples/custom_kernel.{native,byte}>: pkg_lwt
@@ -80,7 +78,6 @@
 <examples/*.ml{,i}>: pkg_calendar
 <examples/*.ml{,i}>: pkg_cohttp
 <examples/*.ml{,i}>: pkg_cohttp.lwt
-<examples/*.ml{,i}>: pkg_cryptokit
 <examples/*.ml{,i}>: pkg_cstruct.unix
 <examples/*.ml{,i}>: pkg_ezxmlm
 <examples/*.ml{,i}>: pkg_lwt

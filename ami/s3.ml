@@ -33,7 +33,7 @@ let put ?region bucket obj =
     (* TODO region *)
     let region = match region with
       | Some r -> EC2_t.string_of_region r
-      | None -> match Sys.getenv "REGION" with exn -> EC2_t.(string_of_region US_EAST_1) in
+      | None -> try Sys.getenv "REGION" with exn -> EC2_t.(string_of_region US_EAST_1) in
     realize_headers meth uri body s3 region ~acl:"authenticated-read" in 
   let headers = Cohttp.Header.add headers "x-amz-content-sha256" (Hash.hex_hash body) in
   request Monad.({ api = s3;

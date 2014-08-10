@@ -174,7 +174,7 @@ let split file =
   ignore @@ Sys.command @@ Printf.sprintf "cp %s %s" file part;
   [part]
 
-let img_of_file ~aeskey ~iv ~cert ~digest ~parts ?user file = 
+let img_of_file ~aeskey ~iv ~cert ~digest ~parts ?user ?ec2_cert file = 
   let open Filename in
   let name = basename file in
   let bundle = tmp @@ Printf.sprintf "%s.tar.gz.enc" name in
@@ -184,14 +184,12 @@ let img_of_file ~aeskey ~iv ~cert ~digest ~parts ?user file =
 	      with exn -> failwith "env variable AWS_USER not set" in
   let size = filesize file in
   let b_size = filesize bundle in
-  let ec2_cert = None in (* TODO *)
   let ec2_pub_key = 
     let ec2_cert = match ec2_cert with 
       | Some c -> c
-      | None -> let cert = "cert-ec2.pem" in
+      | None -> let cert = "ec2/cert-ec2.pem" in
 		let dir = BaseStandardVar.datadir () in
-		let pkg = BaseStandardVar.pkg_name () in
-		Filename.(concat dir @@ concat pkg cert) in
+		Filename.concat dir cert in
     pubkey_of_cert ec2_cert in
   let user_pub_key = pubkey_of_cert cert in 
   let ec2_enc_key = pub_enc ec2_pub_key aeskey in
@@ -251,8 +249,8 @@ let sign keyfile i =
     Nocrypto.Hash.SHA1.digest |>
     Nocrypto.RSA.PKCS1.sign ~key
 
-let manifest_of_file f ?user ~key ~cert ~aeskey ~iv ~digest ~parts = 
-  let img = img_of_file ~aeskey ~iv ~cert ~digest ~parts ?user f in
+let manifest_of_file f ?user ?ec2_cert ~key ~cert ~aeskey ~iv ~digest ~parts = 
+  let img = img_of_file ~aeskey ~iv ~cert ~digest ~parts ?user ?ec2_cert f in
   { version = manivers;
     bundler = bundler;
     machine_config = mymachconf;
@@ -293,7 +291,7 @@ let clean_up f () =
   ignore @@ List.map (fun s -> Sys.command @@ Printf.sprintf "rm %s" s) to_delete 
 
 (* img -> ~cert -> ~key -> ?ec2_cert -> (xml_manifest, [parts_filenames] *)
-let bundle_img ~key ~cert ?user f = 
+let bundle_img ~key ~cert  ?ec2_cert ?user f = 
   Nocrypto.Rng.reseed (Cstruct.of_string "\001\002\003\004");
   let gen_key () = Nocrypto.Rng.generate 16 |> Cstruct.to_string |> hex in
   let aeskey = gen_key ()
@@ -301,12 +299,12 @@ let bundle_img ~key ~cert ?user f =
   let digest = bundle ~aeskey ~iv f () in
   let bundle = tmp @@ Printf.sprintf "%s.tar.gz.enc" @@ Filename.basename f in
   let parts = bundle |> split |> digest_parts in
-  let manifestdest = manifest_of_file f ?user ~key ~cert ~aeskey ~iv ~digest ~parts |> 
+  let manifestdest = manifest_of_file f ?user ?ec2_cert ~key ~cert ~aeskey ~iv ~digest ~parts |> 
 		       tree_of_manifest |>
 		       create_manifest (Filename.basename f) in
   clean_up f ();
   let parts_paths = List.map (fun p -> tmp @@ p.filename) parts in
   (manifestdest, parts_paths)
 
-let upload (m, ps) ~bucket = 
-  List.map (fun f -> S3.put bucket f) (m::ps)
+let upload ?region (m, ps) ~bucket = 
+  List.map (fun f -> S3.put ?region bucket f) (m::ps)

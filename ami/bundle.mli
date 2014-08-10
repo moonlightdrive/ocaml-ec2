@@ -1,3 +1,3 @@
-val bundle_img : key:string -> cert:string -> ?user:string -> string -> string * string list
+val bundle_img : key:string -> cert:string -> ?ec2_cert:string -> ?user:string -> string -> string * string list
 
-val upload : string * string list -> bucket:string -> unit Lwt.t list
+val upload : ?region:EC2_t.region_name -> string * string list -> bucket:string -> unit Lwt.t list
