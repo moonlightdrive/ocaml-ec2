@@ -154,7 +154,6 @@ let digest_parts =
   let to_part p = { filename = Filename.basename p; digest = digest p;} in
   List.map to_part 
 
-(* RSA PKCS1 *)
 let pub_enc key msg =
   Nocrypto.RSA.PKCS1.encrypt ~key (Cstruct.of_string msg) |> Cstruct.to_string |> hex
 	     
@@ -165,14 +164,49 @@ let pubkey_of_cert file =
     fun c -> (Certificate.asn_of_cert c).tbs_cert.pk_info |>
     function | PK.RSA pub -> pub | _ -> invalid_arg "No public key in certificate"
 
-(* TODO *)
+let split file = 
+  let open Lwt in
+  let open Lwt_io in
+  let chunksize = 1024 * 1024 * 10 in
+  (*   lwt file_contents = open_file ~mode:input file >>= read in     *)
+  lwt filelen = file_length file >|= Int64.to_int in
+(*   let buffer = String.create filelen in
+  with_file ~buffer_size:filelen ~mode:input file 
+	    (fun ic -> read_into_exactly ic buffer 0 filelen); *)
+(*   >>= fun () -> return buffer in *)
+  let ic = open_in_bin file in
+  let buffer = String.create filelen in
+(*   read_into_exactly ic buffer 0 filelen; *)
+  really_input ic buffer 0 filelen;
+  close_in ic;
+  let basename = Filename.(chop_suffix file ".tar.gz.enc" |> basename) in
+  let rec aux n ps buf () =
+    let rem = String.length buf in
+    let len = match rem < chunksize with true -> rem | false -> chunksize in
+    let part = tmp @@ Printf.sprintf "%s.part.%i" basename n in
+(*    lwt part_chan = open_file ~mode:output part in
+    write_from_exactly part_chan buf 0 len;
+    print_endline @@ Printf.sprintf "wrote %i bytes to part %i" len n;
+    close part_chan; *)
+    let oc = open_out_bin part in
+    Pervasives.output oc buf 0 len;
+    close_out oc;
+    let newbuf = String.create (rem - len) in
+    match newbuf with
+    | "" -> return @@ List.rev (part::ps)
+    | s -> String.blit buf len newbuf 0 (String.length newbuf);
+	   aux (succ n) (part::ps) newbuf () in
+  aux 0 [] buffer ()
+	
+(*
 let split file = 
   let part = 
     let n = 0 in
     let name = Filename.(chop_extension @@ chop_extension @@ name_only file) in
     tmp @@ Printf.sprintf "%s.part.%i" name n in
   ignore @@ Sys.command @@ Printf.sprintf "cp %s %s" file part;
-  [part]
+  Lwt.return [part]
+ *)
 
 let img_of_file ~aeskey ~iv ~cert ~digest ~parts ?user ?ec2_cert file = 
   let open Filename in
@@ -288,23 +322,24 @@ let create_manifest name m =
 let clean_up f () = 
   let to_delete = [digest_pipe; 
 		   tmp @@ Printf.sprintf "%s.tar.gz.enc" @@ Filename.basename f] in
-  ignore @@ List.map (fun s -> Sys.command @@ Printf.sprintf "rm %s" s) to_delete 
+  ignore @@ List.map Unix.unlink to_delete 
 
 (* img -> ~cert -> ~key -> ?ec2_cert -> (xml_manifest, [parts_filenames] *)
 let bundle_img ~key ~cert  ?ec2_cert ?user f = 
+  let open Lwt in
   Nocrypto.Rng.reseed (Cstruct.of_string "\001\002\003\004");
   let gen_key () = Nocrypto.Rng.generate 16 |> Cstruct.to_string |> hex in
-  let aeskey = gen_key ()
-  and iv = gen_key ()  in 
+  let aeskey = gen_key () in
+  let iv = gen_key ()  in  
   let digest = bundle ~aeskey ~iv f () in
   let bundle = tmp @@ Printf.sprintf "%s.tar.gz.enc" @@ Filename.basename f in
-  let parts = bundle |> split |> digest_parts in
+  lwt parts = bundle |> split >|= digest_parts in
   let manifestdest = manifest_of_file f ?user ?ec2_cert ~key ~cert ~aeskey ~iv ~digest ~parts |> 
 		       tree_of_manifest |>
 		       create_manifest (Filename.basename f) in
   clean_up f ();
   let parts_paths = List.map (fun p -> tmp @@ p.filename) parts in
-  (manifestdest, parts_paths)
+  return (manifestdest, parts_paths)
 
 let upload ?region (m, ps) ~bucket = 
   List.map (fun f -> S3.put ?region bucket f) (m::ps)
