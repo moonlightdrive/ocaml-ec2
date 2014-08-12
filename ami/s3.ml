@@ -24,10 +24,10 @@ let put ?region bucket obj =
   lwt body = 
     let open Lwt_io in
     let open Lwt in
-    lwt len = Lwt_io.file_length obj >|= Int64.to_int in
+    lwt len = file_length obj >|= Int64.to_int in
     let buffer = String.create len in
-    Lwt_io.with_file ~buffer_size:len ~mode:input obj 
-		     (fun ic -> Lwt_io.read_into_exactly ic buffer 0 len)
+    with_file ~buffer_size:len ~mode:input obj 
+		     (fun ic -> read_into_exactly ic buffer 0 len)
     >>= fun () -> return buffer in
   let headers = 
     (* TODO region *)
