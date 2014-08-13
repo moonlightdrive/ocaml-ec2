@@ -2,9 +2,11 @@ open EC2
 open EC2_t
 open Lwt
 
-let my_key = "/home/jsp/.gsoc2014/teddy-key-pair-us-west-2.pem"
-let my_cert = "/home/jsp/.gsoc2014/cert-DJA72DUFD7RQFWW4WSAAYD22JZQQL3S2.pem"
+let image = "my.img"
+let my_key = "myprivatekey.pem"
+let my_cert = "mycert.pem"
 let region = US_WEST_2
+let my_bucket = "mybucket"
 
 let start_instance img_file key cert bucket =
   print_endline "Bundling image...";
@@ -20,5 +22,5 @@ let start_instance img_file key cert bucket =
 			  Printf.sprintf "Launching instance %s" (ImageID.to_string id);
 			Instances.run id ~region ()) 
 	     
-let _ = Lwt_main.run 
-	  (Monad.run @@ start_instance "/tmp/mymirage.img" my_key my_cert "jymirage")
+let _ = Lwt_main.run  
+	  (Monad.run @@ start_instance image my_key my_cert my_bucket)
