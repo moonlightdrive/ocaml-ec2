@@ -98,16 +98,28 @@ module API = struct
 
   let ec2 = { service = "ec2";
 	      version = "2014-05-01"; }
-	      
+	     
+  (* for debugging *)
+  let response_to_file action resp = 
+    let dir = "/home/jsp/ocaml-ec2/lib_test/xml_responses" in
+    let file = 
+      let time = CalendarLib.(Time.now () |> Printer.Time.to_string) in
+      let name = Printf.sprintf "%s-%s.xml" action time in
+      Filename.concat dir name in
+    Lwt_io.(with_file ~buffer_size:(String.length resp) ~mode:output file
+		      (fun oc -> write oc resp))
+ 
   let handle_response action fn (envelope,body) = 
     let open Monad in
     lwt body = Cohttp_lwt_body.to_string body in
-    let (_,body) = Ezxmlm.from_string body in
-    try_lwt
+    let (_,body) = Ezxmlm.from_string body in 
+    try
+      print_endline @@ "looking for "^action^"Response";
       let body = Ezxmlm.member (action^"Response") body in 
       let r = fn body in
       Lwt.return (Monad.response r)    
       with exn ->
+	print_endline @@ "didn't find "^action^"Response";
 	let awserr_of_str x = 
 	  let open Ezxmlm in
 	  Monad.({ code = member "Code" x |> data_to_string;
@@ -115,7 +127,7 @@ module API = struct
 	let body = Ezxmlm.member "Response" body in
 	let errs = List.map awserr_of_str (Ezxmlm.member "Errors" body 
 					   |> Ezxmlm.members "Error") in
-	Lwt.return Monad.(error (Generic (envelope, errs)))
+ 	Lwt.return Monad.(error (Generic (envelope, errs))) 
 		   
   let lwt_req {Monad.api; body; headers; meth; uri} =
     Cohttp_lwt_unix.Client.call ~headers ~body ~chunked:false meth uri
@@ -197,9 +209,10 @@ module Instances = struct
   let run ?(min=1) ?(max=1) ?(instance="m1.small") ?zone ?kernel id ?region () =
     let params = Util.add_opt_param ?value:zone "Placement.AvailabilityZone" [] in
     let params = Util.add_opt_param ?value:kernel "KernelId" params in
-    let params = params@[("ImageId", ImageID.to_string id); 
+    let params = params@[("ImageId", ImageID.to_string id);
 			 ("MinCount", string_of_int min); 
-			 ("MaxCount", string_of_int max)] in
+			 ("MaxCount", string_of_int max);
+			 ("InstanceType", instance);] in
     API.get "RunInstances" ~params run_instances_of_string ?region
 
   let start ids ?region () =
