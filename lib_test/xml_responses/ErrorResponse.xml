@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Response xmlns="http://ec2.amazonaws.com/doc/2014-05-01/">
+    <Errors>
+         <Error>
+           <Code>InvalidInstanceID.NotFound</Code>
+           <Message>The instance ID 'i-4cbc822a' does not exist</Message>
+         </Error>
+    </Errors>
+    <RequestID>ea966190-f9aa-478e-9ede-cb5432daacc0</RequestID>
+</Response>
