@@ -68,12 +68,12 @@ type group_item = { id: string; name: string }
 			
 type running_instance = { id: string;
 			  image: string;
-			  state: instance_state;
+		(*	  state: instance_state;
 			  private_dns: string;
 			  public_dns: string;
 			  reason: string;
 			  key_name: string;
-			  ami_launch_index: string;
+			  ami_launch_index: string; *)
 			  (*product_codes: productCodesSetItemType*)
 			  instance_type: string;
 			  launch_time: time;
@@ -84,9 +84,8 @@ type running_instance = { id: string;
 			  
 type run_instances = { reservation: string;
 		       owner: string;
-		       security_groups: group_item list;
-		       instances: running_instance list;
-		       requester: string; }
+	(*	       security_groups: group_item list; *)
+		       instances: running_instance list; }
 		       
 type instance_state_change = { id: string; 
 			       current: instance_state;

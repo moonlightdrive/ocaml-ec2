@@ -40,25 +40,26 @@ let group_of_string item = { id = string_of_member "groupId" item;
 let running_instances_of_string item = 
   { id = string_of_member "instanceId" item;
     image = string_of_member "imageId" item;
-    state = member "instanceState" item |> instance_state_of_string;
+(*    state = member "instanceState" item |> instance_state_of_string; 
     private_dns = string_of_member "privateDnsName" item;
     public_dns = string_of_member "dnsName" item;
     reason = string_of_member "reason" item;
     key_name = string_of_member "keyName" item;
-    ami_launch_index = string_of_member "amiLaunchIndex" item;
+    ami_launch_index = string_of_member "amiLaunchIndex" item; *)
     (*product_codes = member "productCodes" item |> members "item" |> smth_of_string *)
     instance_type = string_of_member "instanceType" item;
     launch_time = string_of_member "launchTime" item;
     kernel = string_of_member "kernelId" item }  
 
+(* Docs[1] say there is a requesterId in the XML response BUT there actually isn't? 
+[1] http://docs.aws.amazon.com/AWSEC2/latest/APIReference/ApiReference-query-RunInstances.html *)
 let run_instances_of_string x =
   { reservation = string_of_member "reservationId" x;
     owner = string_of_member "ownerId" x;
-    security_groups = member "groupSet" x |> members "item" |>
-			 List.map group_of_string;
+(*    security_groups = member "groupSet" x |> members "item" |>
+			 List.map group_of_string; *)
     instances = member "instancesSet" x |> members "item" 
-		|> List.map running_instances_of_string;
-    requester = string_of_member "requesterId" x }					 
+		|> List.map running_instances_of_string; }					 
 
 let instance_state_change_of_string x = 
   { id = string_of_member "instanceId" x;
