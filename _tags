@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: 77680166154961ab40e19b636a7da749)
+# DO NOT EDIT (digest: df4ea3f0133a899766edfebf11aee0df)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -39,27 +39,17 @@
 <ami/*.ml{,i}>: pkg_xmlm
 <ami/*.ml{,i}>: use_ec2
 # Executable describe_regions
-<lib_test/describe_regions.{native,byte}>: pkg_calendar
-<lib_test/describe_regions.{native,byte}>: pkg_cohttp
-<lib_test/describe_regions.{native,byte}>: pkg_cohttp.lwt
-<lib_test/describe_regions.{native,byte}>: pkg_cstruct.unix
-<lib_test/describe_regions.{native,byte}>: pkg_ezxmlm
-<lib_test/describe_regions.{native,byte}>: pkg_lwt
-<lib_test/describe_regions.{native,byte}>: pkg_lwt.syntax
-<lib_test/describe_regions.{native,byte}>: pkg_nocrypto
-<lib_test/describe_regions.{native,byte}>: pkg_uri
-<lib_test/describe_regions.{native,byte}>: use_ec2
-<lib_test/*.ml{,i}>: pkg_calendar
-<lib_test/*.ml{,i}>: pkg_cohttp
-<lib_test/*.ml{,i}>: pkg_cohttp.lwt
-<lib_test/*.ml{,i}>: pkg_cstruct.unix
-<lib_test/*.ml{,i}>: pkg_ezxmlm
-<lib_test/*.ml{,i}>: pkg_lwt
-<lib_test/*.ml{,i}>: pkg_lwt.syntax
-<lib_test/*.ml{,i}>: pkg_nocrypto
-<lib_test/*.ml{,i}>: pkg_uri
-<lib_test/*.ml{,i}>: use_ec2
-<lib_test/describe_regions.{native,byte}>: custom
+<examples/describe_regions.{native,byte}>: pkg_calendar
+<examples/describe_regions.{native,byte}>: pkg_cohttp
+<examples/describe_regions.{native,byte}>: pkg_cohttp.lwt
+<examples/describe_regions.{native,byte}>: pkg_cstruct.unix
+<examples/describe_regions.{native,byte}>: pkg_ezxmlm
+<examples/describe_regions.{native,byte}>: pkg_lwt
+<examples/describe_regions.{native,byte}>: pkg_lwt.syntax
+<examples/describe_regions.{native,byte}>: pkg_nocrypto
+<examples/describe_regions.{native,byte}>: pkg_uri
+<examples/describe_regions.{native,byte}>: use_ec2
+<examples/describe_regions.{native,byte}>: custom
 # Executable custom_kernel
 <examples/custom_kernel.{native,byte}>: pkg_calendar
 <examples/custom_kernel.{native,byte}>: pkg_cohttp
@@ -90,4 +80,26 @@
 <examples/*.ml{,i}>: use_ec2
 <examples/*.ml{,i}>: use_ec2-ami
 <examples/custom_kernel.{native,byte}>: custom
+# Executable parsexml
+<lib_test/parsexml.{native,byte}>: pkg_calendar
+<lib_test/parsexml.{native,byte}>: pkg_cohttp
+<lib_test/parsexml.{native,byte}>: pkg_cohttp.lwt
+<lib_test/parsexml.{native,byte}>: pkg_cstruct.unix
+<lib_test/parsexml.{native,byte}>: pkg_ezxmlm
+<lib_test/parsexml.{native,byte}>: pkg_lwt
+<lib_test/parsexml.{native,byte}>: pkg_lwt.syntax
+<lib_test/parsexml.{native,byte}>: pkg_nocrypto
+<lib_test/parsexml.{native,byte}>: pkg_uri
+<lib_test/parsexml.{native,byte}>: use_ec2
+<lib_test/*.ml{,i}>: pkg_calendar
+<lib_test/*.ml{,i}>: pkg_cohttp
+<lib_test/*.ml{,i}>: pkg_cohttp.lwt
+<lib_test/*.ml{,i}>: pkg_cstruct.unix
+<lib_test/*.ml{,i}>: pkg_ezxmlm
+<lib_test/*.ml{,i}>: pkg_lwt
+<lib_test/*.ml{,i}>: pkg_lwt.syntax
+<lib_test/*.ml{,i}>: pkg_nocrypto
+<lib_test/*.ml{,i}>: pkg_uri
+<lib_test/*.ml{,i}>: use_ec2
+<lib_test/parsexml.{native,byte}>: custom
 # OASIS_STOP

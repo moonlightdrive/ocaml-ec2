@@ -10,8 +10,8 @@ Plugins: META (0.4), DevFiles (0.4)
 Library ec2
   Path: lib
   Findlibname: ec2
-  Modules: Monad, EC2, EC2_t
-  InternalModules: Signature4, EC2_x
+  Modules: EC2, EC2_t
+  InternalModules: Signature4, Monad, EC2_x
   BuildDepends: cohttp.lwt, lwt.syntax, cohttp, uri, calendar, ezxmlm, cstruct.unix, nocrypto
 
 Library "ec2-ami"
@@ -24,7 +24,7 @@ Library "ec2-ami"
   BuildDepends: ec2, x509, nocrypto, xmlm, lwt, lwt.syntax, cstruct.unix, oasis.base
 
 Executable describe_regions
-  Path: lib_test
+  Path: examples
   MainIs: describe_regions.ml
   Custom: true
   CompiledObject: best
@@ -38,3 +38,11 @@ Executable custom_kernel
   CompiledObject: best
   Install: false
   BuildDepends: lwt, ec2, ec2.ami
+
+Executable parsexml
+  Path: lib_test
+  MainIs: parsexml.ml
+  Custom:true
+  CompiledObject:best
+  Install: false
+  BuildDepends: lwt, lwt.syntax, ec2
