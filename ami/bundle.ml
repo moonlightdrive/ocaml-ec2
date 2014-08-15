@@ -230,12 +230,12 @@ let img_of_file ~aeskey ~iv ~cert ~digest ~parts ?user ?ec2_cert file =
   let user_enc_key = pub_enc user_pub_key aeskey in
   let ec2_enc_iv = pub_enc ec2_pub_key iv in
   let user_enc_iv = pub_enc user_pub_key iv in
-  { name = name; user = user;
-    img_type = "machine"; digest = digest;
-    size = size; b_size = b_size; 
-    ec2_enc_key = ec2_enc_key; user_enc_key = user_enc_key;
-    ec2_enc_iv = ec2_enc_iv; user_enc_iv = user_enc_iv; 
-    parts = parts; }
+  { name; user;
+    img_type = "machine"; digest;
+    size; b_size; 
+    ec2_enc_key; user_enc_key;
+    ec2_enc_iv; user_enc_iv; 
+    parts; }
         
 (*
 Pipeline.execute: command = [/bin/bash -c 'openssl sha1 < /tmp/ec2-bundle-image-digest-pipe-10174 & tar -c -h -S --owner 0 --group 0 -C /home/jsp mymirage.img | tee /tmp/ec2-bundle-image-digest-pipe-10174 | gzip -9 | openssl enc -e -aes-128-cbc -K a3890552c945121fd49f0f08bfcc0a55 -iv 7e31f208a4211a2f46126b6b07d5e461 > ec2_tmp/mymirage.img.tar.gz.enc; echo ${PIPESTATUS[0]} > /tmp/image-bundle-pipeline-pipestatus-020140728-10174-1l636zs & echo ${PIPESTATUS[1]} > /tmp/image-bundle-pipeline-pipestatus-120140728-10174-1y9khin & echo ${PIPESTATUS[2]} > /tmp/image-bundle-pipeline-pipestatus-220140728-10174-1ys78ae & echo ${PIPESTATUS[3]} > /tmp/image-bundle-pipeline-pipestatus-320140728-10174-1p9bng1']
@@ -284,11 +284,11 @@ let sign keyfile i =
     Nocrypto.RSA.PKCS1.sign ~key
 
 let manifest_of_file f ?user ?ec2_cert ~key ~cert ~aeskey ~iv ~digest ~parts = 
-  let img = img_of_file ~aeskey ~iv ~cert ~digest ~parts ?user ?ec2_cert f in
+  let image = img_of_file ~aeskey ~iv ~cert ~digest ~parts ?user ?ec2_cert f in
   { version = manivers;
-    bundler = bundler;
+    bundler;
     machine_config = mymachconf;
-    image = img;
+    image;
     signature = match sign key img with 
 		| Some s -> Cstruct.to_string s |> hex
 		| None -> raise (Failure "error signing manifest"); }

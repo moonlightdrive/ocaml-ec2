@@ -38,6 +38,4 @@ let put ?region bucket obj =
   let headers = Cohttp.Header.add headers "x-amz-content-sha256" (Hash.hex_hash body) in
   request Monad.({ api = s3;
 		   body = Cohttp_lwt_body.of_string body;
-		   headers = headers;
-		   meth = meth;
-		   uri = uri; })
+		   headers; meth; uri; })

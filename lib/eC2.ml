@@ -149,9 +149,7 @@ module API = struct
     let headers = realize_headers meth uri body ec2 region in
     request action fn Monad.({ api = ec2;
 			       body = Cohttp_lwt_body.of_string body;
-			       headers = headers;
-			       meth = meth;
-			       uri = uri; })
+			       headers; meth; uri; })
 	    
   let get action = verb `GET action
   let post action = verb `POST action 
