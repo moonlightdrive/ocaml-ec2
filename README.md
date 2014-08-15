@@ -2,7 +2,7 @@ ocaml-ec2
 =========
 ocaml-ec2 provides OCaml bindings to Amazon's Elastic Compute Cloud. This library is incomplete and a bit rough around the edges.
 
-Some examples of usage can be found in the `lib_test` directory.
+Some examples of usage can be found in the `examples` directory.
 
 # Installation
 ``` 
