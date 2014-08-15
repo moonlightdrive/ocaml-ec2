@@ -105,7 +105,7 @@ module API = struct
 	     
   (* for debugging *)
   let response_to_file action resp = 
-    let dir = "/home/jsp/ocaml-ec2/lib_test/xml_responses" in
+    let dir = "lib_test/xml_responses" in
     let file = 
       let time = CalendarLib.(Time.now () |> Printer.Time.to_string) in
       let name = Printf.sprintf "%s-%s.xml" action time in
@@ -123,17 +123,13 @@ module API = struct
       let awserr_of_str x : Monad.aws_error = 
 	{ code = member "Code" x |> data_to_string;
 	  msg = member "Message" x |> data_to_string ; } in	      
-      let body = member response body in
-      let errs = List.map awserr_of_str (member "Errors" body |> members "Error") in
-      return @@ Monad.(error (Generic (envelope, errs))) in
+      try let body = member response body in
+	  let errs = List.map awserr_of_str (member "Errors" body |> members "Error") in
+	  return @@ Monad.(error @@ Generic (envelope, errs))
+      with exn -> return @@ Monad.(error @@ XML action) in
     lwt (_,body) = Cohttp_lwt_body.to_string body >|= from_string in
-      try 
-	 return @@ Monad.response @@ fn @@ member actionresp body
-      with 
-      (* TODO warning this match case is unused *)
-      | Tag_not_found actionresp -> parse_err (envelope, body)
-      | Tag_not_found response -> return @@ Monad.(error @@ XML action)
-											       
+    try return @@ Monad.response @@ fn @@ member actionresp body 
+    with exn -> parse_err (envelope, body)
 				     
   let lwt_req {Monad.api; body; headers; meth; uri} =
     Cohttp_lwt_unix.Client.call ~headers ~body ~chunked:false meth uri
