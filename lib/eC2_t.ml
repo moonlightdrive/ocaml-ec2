@@ -29,6 +29,7 @@ let region_of_string = function
   | "ap-southeast-2" -> AP_SOUTHEAST_2
   | "ap-northeast-1" -> AP_NORTHEAST_1
   | "sa-east-1" -> SA_EAST_1
+  | s -> invalid_arg @@ Printf.sprintf "region_of_string: %s" s
 
 let string_of_region = function
   | US_EAST_1 -> "us-east-1"
