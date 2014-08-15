@@ -289,7 +289,7 @@ let manifest_of_file f ?user ?ec2_cert ~key ~cert ~aeskey ~iv ~digest ~parts =
     bundler;
     machine_config = mymachconf;
     image;
-    signature = match sign key img with 
+    signature = match sign key image with 
 		| Some s -> Cstruct.to_string s |> hex
 		| None -> raise (Failure "error signing manifest"); }
 
