@@ -9,6 +9,7 @@ type aws_error = { code: string;
 		 
 type error = 
   | Generic of Cohttp.Response.t * aws_error list
+  | XML of string
   | No_response
       
 type 'a signal = 
@@ -26,7 +27,10 @@ let awserrs_to_str errs =
 
 let error_to_string = function
   | Generic (http, aws) -> Printf.sprintf "HTTP Error %s\n%s" 
-					  (Cohttp.Code.string_of_status (Cohttp.Response.status http)) (awserrs_to_str aws)
+					  (Cohttp.Code.string_of_status 
+					     (Cohttp.Response.status http)) 
+					  (awserrs_to_str aws)
+  | XML action -> Printf.sprintf "Error parsing %s response" action
   | No_response -> "No response"
 		     
 let bind x fn = match_lwt x with

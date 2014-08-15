@@ -43,7 +43,9 @@ module Util = struct
 	     
 end
 
-module Monad = struct
+
+(* TODO remove? *)
+(* module Monad = struct
 
   type request = { api: Signature4.api; 
 		   body: Cohttp_lwt_body.t;
@@ -56,6 +58,7 @@ module Monad = struct
 		     
   type error = 
     | Generic of Cohttp.Response.t * aws_error list
+    | XML of string
     | No_response
 	
   type 'a signal = 
@@ -64,7 +67,7 @@ module Monad = struct
    and 'a t = ('a signal) Lwt.t
 			  
   let error e = Error e
-		      
+n		      
   let response r = Response r
 			    
   let awserrs_to_str errs = 
@@ -74,6 +77,7 @@ module Monad = struct
   let error_to_string = function
     | Generic (http, aws) -> Printf.sprintf "HTTP Error %s\n%s" 
 					    (Cohttp.Code.string_of_status (Cohttp.Response.status http)) (awserrs_to_str aws)
+    | XML action -> Printf.sprintf "Some XML parsing error %s" action
     | No_response -> "No response"
 		       
   let bind x fn = match_lwt x with
@@ -90,8 +94,8 @@ module Monad = struct
 					 
   let (>>=) = bind
 		
-end
-		 
+end *)
+
 module API = struct
 
   open Signature4
@@ -106,29 +110,31 @@ module API = struct
       let time = CalendarLib.(Time.now () |> Printer.Time.to_string) in
       let name = Printf.sprintf "%s-%s.xml" action time in
       Filename.concat dir name in
+    print_endline @@ Printf.sprintf "created %s" file;
     Lwt_io.(with_file ~buffer_size:(String.length resp) ~mode:output file
 		      (fun oc -> write oc resp))
- 
+
   let handle_response action fn (envelope,body) = 
-    let open Monad in
-    lwt body = Cohttp_lwt_body.to_string body in
-    let (_,body) = Ezxmlm.from_string body in 
-    try
-      print_endline @@ "looking for "^action^"Response";
-      let body = Ezxmlm.member (action^"Response") body in 
-      let r = fn body in
-      Lwt.return (Monad.response r)    
-      with exn ->
-	print_endline @@ "didn't find "^action^"Response";
-	let awserr_of_str x = 
-	  let open Ezxmlm in
-	  Monad.({ code = member "Code" x |> data_to_string;
-		   msg = member "Message" x |> data_to_string ; }) in	      
-	let body = Ezxmlm.member "Response" body in
-	let errs = List.map awserr_of_str (Ezxmlm.member "Errors" body 
-					   |> Ezxmlm.members "Error") in
- 	Lwt.return Monad.(error (Generic (envelope, errs))) 
-		   
+    let open Lwt in
+    let open Ezxmlm in
+    let response = "Response" in
+    let actionresp = action^response in
+    let parse_err (envelope, body) = 
+      let awserr_of_str x : Monad.aws_error = 
+	{ code = member "Code" x |> data_to_string;
+	  msg = member "Message" x |> data_to_string ; } in	      
+      let body = member response body in
+      let errs = List.map awserr_of_str (member "Errors" body |> members "Error") in
+      return @@ Monad.(error (Generic (envelope, errs))) in
+    lwt (_,body) = Cohttp_lwt_body.to_string body >|= from_string in
+      try 
+	 return @@ Monad.response @@ fn @@ member actionresp body
+      with 
+      (* TODO warning this match case is unused *)
+      | Tag_not_found actionresp -> parse_err (envelope, body)
+      | Tag_not_found response -> return @@ Monad.(error @@ XML action)
+											       
+				     
   let lwt_req {Monad.api; body; headers; meth; uri} =
     Cohttp_lwt_unix.Client.call ~headers ~body ~chunked:false meth uri
 				

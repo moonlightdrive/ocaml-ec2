@@ -1,9 +1,19 @@
-module Monad : sig
+(* 
+  module Monad : sig
   type 'a t
+  type 'a signal
   val bind : 'a t -> ('a -> 'b t) -> 'b t
   val return : 'a -> 'a t
   val run : 'a t -> 'a Lwt.t
   val (>>=) : 'a t -> ('a -> 'b t) -> 'b t
+end 
+ *)
+
+(* For testing purposes. No need to call these directly *)
+module API : sig
+  val handle_response : string -> (Ezxmlm.nodes -> 'a) -> 
+			Cohttp.Response.t * Cohttp_lwt_body.t -> 
+			'a Monad.signal Lwt.t
 end
 
 module AMI : sig
