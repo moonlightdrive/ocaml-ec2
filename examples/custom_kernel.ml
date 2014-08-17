@@ -1,3 +1,11 @@
+(* This program will register an Amazon Machine Image given an image such as `mirage.img`.
+
+The commented function at the end of this file will register an AMI and launch it.
+
+If you are in need of a script to convert unikernels to images, see
+https://gist.githubusercontent.com/moonlightdrive/94a8a254f7ac7f6ed479/raw/5b5338518c3d741c8526472e5165287087a46971/xen2img.sh 
+ *)
+
 open EC2
 open EC2_t
 
@@ -37,5 +45,3 @@ let _ =
   running.instances |>
     List.map (fun (i:running_instance) -> print_endline @@ Printf.sprintf "Launched instance %s" i.id) 
 *)
- 
-  
