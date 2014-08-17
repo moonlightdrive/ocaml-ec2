@@ -15,15 +15,11 @@ let name_only f = Filename.(chop_extension @@ basename f)
 
 let filesize f = let open Unix in (stat f).st_size
 
-let write_file dest str = 
-  let oc = open_out dest in
-  output_string oc str;
-  close_out oc
-
 let format_ssl_output s = 
   let open String in
   let ofs = index s ' ' in
   trim @@ sub s ofs (length s - ofs)
+
 
 (* XML tree things *)
 type tree = E of Xmlm.tag * tree list | D of string
@@ -145,15 +141,9 @@ let split file =
   let open Lwt in
   let open Lwt_io in
   let chunksize = 1024 * 1024 * 10 in
-  (*   lwt file_contents = open_file ~mode:input file >>= read in     *)
   lwt filelen = file_length file >|= Int64.to_int in
-(*   let buffer = String.create filelen in
-  with_file ~buffer_size:filelen ~mode:input file 
-	    (fun ic -> read_into_exactly ic buffer 0 filelen); *)
-(*   >>= fun () -> return buffer in *)
   let ic = open_in_bin file in
   let buffer = String.create filelen in
-(*   read_into_exactly ic buffer 0 filelen; *)
   really_input ic buffer 0 filelen;
   close_in ic;
   let basename = Filename.(chop_suffix file ".tar.gz.enc" |> basename) in
@@ -161,10 +151,6 @@ let split file =
     let rem = String.length buf in
     let len = match rem < chunksize with true -> rem | false -> chunksize in
     let part = tmp @@ Printf.sprintf "%s.part.%i" basename n in
-(*    lwt part_chan = open_file ~mode:output part in
-    write_from_exactly part_chan buf 0 len;
-    print_endline @@ Printf.sprintf "wrote %i bytes to part %i" len n;
-    close part_chan; *)
     let oc = open_out_bin part in
     Pervasives.output oc buf 0 len;
     close_out oc;
@@ -174,16 +160,6 @@ let split file =
     | s -> String.blit buf len newbuf 0 (String.length newbuf);
 	   aux (succ n) (part::ps) newbuf () in
   aux 0 [] buffer ()
-	
-(*
-let split file = 
-  let part = 
-    let n = 0 in
-    let name = Filename.(chop_extension @@ chop_extension @@ name_only file) in
-    tmp @@ Printf.sprintf "%s.part.%i" name n in
-  ignore @@ Sys.command @@ Printf.sprintf "cp %s %s" file part;
-  Lwt.return [part]
- *)
 
 let img_of_file ~aeskey ~iv ~cert ~digest ~parts ?user ?ec2_cert file = 
   let open Filename in
@@ -286,7 +262,6 @@ let create_manifest name m =
   let o = make_output (`Channel oc) in
   let out = output o in
   let frag = 
-(*    let tag n = ("",n), [] in *)
     function
     | E (tag, childs) -> `El (tag, childs) 
     | D d -> `Data d in
