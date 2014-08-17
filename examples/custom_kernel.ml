@@ -14,10 +14,11 @@ let my_key = "myprivatekey.pem"
 let my_cert = "mycert.pem"
 let region = US_WEST_2
 let my_bucket = "mybucket"
+let kernel = "aki-fc8f11cc"
 
 let register_ami img_file key cert bucket () =
   print_endline "Bundling image...";
-  let (manifest_path, part_paths) as files = Bundle.bundle_img ~key ~cert img_file |> Lwt_main.run in
+  let (manifest_path, part_paths) as files = Bundle.bundle_img ~key ~cert ~kernel img_file |> Lwt_main.run in
   print_endline "Uploading bundle (this may take a while)...";
   ignore @@ List.map Lwt_main.run @@ Bundle.upload ~bucket files ~region;
   print_endline "Registering AMI...";

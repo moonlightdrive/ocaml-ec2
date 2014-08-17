@@ -25,28 +25,6 @@ let format_ssl_output s =
   let ofs = index s ' ' in
   trim @@ sub s ofs (length s - ofs)
 
-
-(*
-(* TODO why is this only writing 65536 bytes? *)
-let split file =
-  let open Unix in
-  let chunk_size = 1024 * 1024 * 10 in
-  let buffer = String.create chunk_size in
-  let fd_in = openfile file [O_RDONLY] 0 in 
-  let rec copy_loop n ps () = 
-    let part = 
-      let name = Filename.(chop_extension @@ chop_extension @@ name_only file) in
-      tmp @@ Printf.sprintf "%s.img.part.%i" name n in
-    let ch_out = openfile part [O_WRONLY; O_CREAT; O_TRUNC] 0o666 in
-    match read fd_in buffer (n * chunk_size) buffer_size with 
-    | 0 -> close fd_in; ps
-    | r -> print_endline @@ Printf.sprintf "writing %i bytes" r;
-	   ignore (write ch_out buffer (n * chunk_size) r); 
-	   close ch_out; 
-	   copy_loop (succ n) (part::ps) () in 
-  copy_loop 0 [] ()
-  *)
-
 (* XML tree things *)
 type tree = E of Xmlm.tag * tree list | D of string
 
@@ -144,8 +122,7 @@ type manifest = { version: string;
 (* constants *)
 let manivers = "2007-10-10"		  
 let bundler = { name = "ocaml-ec2"; version = "0.1"; release = "0.1"; }
-let mymachconf = { arch = "x86_64"; kernel = "aki-fc8f11cc"; }
-
+let machconf kernel = { arch = "x86_64"; kernel; }
 
 let digest_parts = 
   let digest p = cs_of_file p |> 
@@ -260,12 +237,12 @@ let bundle f ~aeskey ~iv () =
 		digest_pipe tar_expand digest_pipe aeskey iv encrypted_dest in
     let ic = open_process_in cmd in
     let digest = input_line ic in
-    Unix.close_process_in ic;
+    ignore @@ Unix.close_process_in ic;
     format_ssl_output digest in
   pipeline ()
 	   
 (* sha1 with private key*)
-let sign keyfile i =
+let sign keyfile kernel i =
   let b = Buffer.create 1024 in (* closer to 2198 *)
   let oc = Xmlm.(make_output (`Buffer b) ~decl:false) in
   let out = Xmlm.output oc in
@@ -276,20 +253,20 @@ let sign keyfile i =
     Xmlm.output_tree frag oc in
  let key = X509.PK.of_pem_cstruct1 @@ cs_of_file keyfile in
   out (`Dtd None);
-  o_tree @@ tree_of_machconf mymachconf;
+  o_tree @@ tree_of_machconf @@ machconf kernel;
   out (`Dtd None);
   o_tree @@ tree_of_img i; 
   Buffer.contents b |> Cstruct.of_string |>
     Nocrypto.Hash.SHA1.digest |>
     Nocrypto.RSA.PKCS1.sign ~key
 
-let manifest_of_file f ?user ?ec2_cert ~key ~cert ~aeskey ~iv ~digest ~parts = 
+let manifest_of_file f ?user ?ec2_cert ~key ~cert ~aeskey ~iv ~kernel ~digest ~parts = 
   let image = img_of_file ~aeskey ~iv ~cert ~digest ~parts ?user ?ec2_cert f in
   { version = manivers;
     bundler;
-    machine_config = mymachconf;
+    machine_config = machconf kernel;
     image;
-    signature = match sign key image with 
+    signature = match sign key kernel image with 
 		| Some s -> Cstruct.to_string s |> hex
 		| None -> raise (Failure "error signing manifest"); }
 
@@ -324,8 +301,7 @@ let clean_up f () =
 		   tmp @@ Printf.sprintf "%s.tar.gz.enc" @@ Filename.basename f] in
   ignore @@ List.map Unix.unlink to_delete 
 
-(* img -> ~cert -> ~key -> ?ec2_cert -> (xml_manifest, [parts_filenames] *)
-let bundle_img ~key ~cert  ?ec2_cert ?user f = 
+let bundle_img ~key ~cert ~kernel ?ec2_cert ?user f = 
   let open Lwt in
   Nocrypto.Rng.reseed (Cstruct.of_string "\001\002\003\004");
   let gen_key () = Nocrypto.Rng.generate 16 |> Cstruct.to_string |> hex in
@@ -334,7 +310,7 @@ let bundle_img ~key ~cert  ?ec2_cert ?user f =
   let digest = bundle ~aeskey ~iv f () in
   let bundle = tmp @@ Printf.sprintf "%s.tar.gz.enc" @@ Filename.basename f in
   lwt parts = bundle |> split >|= digest_parts in
-  let manifestdest = manifest_of_file f ?user ?ec2_cert ~key ~cert ~aeskey ~iv ~digest ~parts |> 
+  let manifestdest = manifest_of_file f ?user ?ec2_cert ~key ~cert ~aeskey ~iv ~kernel ~digest ~parts |> 
 		       tree_of_manifest |>
 		       create_manifest (Filename.basename f) in
   clean_up f ();
