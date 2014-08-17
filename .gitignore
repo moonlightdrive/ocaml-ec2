@@ -1,0 +1,10 @@
+_build/
+lib/compile.sh
+lib/_build
+*.native
+*.byte
+*.docdir
+_test
+setup.data
+setup.log
+*~
