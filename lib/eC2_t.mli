@@ -37,53 +37,67 @@ val string_of_region : region_name -> string
 type time = string
 	      
 type successful = bool
-		    
-type create_snapshot = { snapshot: string;
-			 volume: string;
-			 status: string; (* pending|completed|error *)
-			 start_time: string;
-			 progress: string;
-			 owner: string;
-			 size: string;
-			 encrypted: bool;
-			 description: string }
-			 
-type console_output = { instance: string;
-			timestamp: time;
-			output: string }
-			
-type instance_state = { code: int; name: string; }
-(* name: pending|running|shutting-down... code: 16-bit unsigned
-see http://docs.aws.amazon.com/AWSEC2/latest/APIReference/ApiReference-ItemType-InstanceStateType.html *)
 
+module Create_snapshot : sig
+  type t = { snapshot: string;
+	     volume: string;
+	     status: string; (* pending|completed|error *)
+	     start_time: string;
+	     progress: string;
+	     owner: string;
+	     size: string;
+	     encrypted: bool;
+	     description: string;
+	   }
+end
+module Console_output : sig
+  type t = { instance: string;
+	     timestamp: time;
+	     output: string;
+	   }
+end
+module Instance_state : sig
+  (* name: pending|running|shutting-down... code: 16-bit unsigned
+   * see http://docs.aws.amazon.com/AWSEC2/latest/APIReference/ApiReference-ItemType-InstanceStateType.html *)
+  type t = { code: int; name: string; }
+end
 (* Describes a security group *)
-type group_item = { id: string; name: string }
-			
-type running_instance = { id: string;
-			  image: string;
-(*			  state: instance_state;
+module Group_item : sig
+  type t = { id: string; name: string; }
+end
+module Running_instance : sig
+  type t = { id: string;
+	     image: string;
+	     (*			  state: instance_state;
 			  private_dns: string;
 			  public_dns: string;
 			  reason: string;
 			  key_name: string;
 			  ami_launch_index: string; *)
-			  (*product_codes: productCodesSetItemType*)
-			  instance_type: string;
-			  launch_time: time;
-			  (*placement:*)
-			  kernel: string;
-			(* TODO there are more fields! *)
-			}
-			  
-type run_instances = { reservation: string;
-		       owner: string;
-		     (*  security_groups: group_item list; *)
-		       instances: running_instance list; }
-		       
-type instance_state_change = { id: string; 
-			       current: instance_state;
-			       previous: instance_state; }
-			       
-type key_pair = { name: string; fingerprint: string; }
-
-type region = { name: region_name; endpoint: string; }
+	     (*product_codes: productCodesSetItemType*)
+	     instance_type: string;
+	     launch_time: time;
+	     (*placement:*)
+	     kernel: string;
+	   (* TODO there are more fields! *)
+	   }
+end
+module Run_instances : sig
+  type t = { reservation: string;
+	     owner: string;
+	     (*  security_groups: group_item list; *)
+	     instances: Running_instance.t list; 
+	   }
+end
+module Instance_state_change : sig
+  type t = { id: string; 
+	     current: Instance_state.t;
+	     previous: Instance_state.t;
+	   }
+end
+module Key_pair : sig
+  type t = { name: string; fingerprint: string; }
+end
+module Region : sig
+  type t = { name: region_name; endpoint: string; }
+end

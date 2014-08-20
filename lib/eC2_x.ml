@@ -30,7 +30,7 @@ let dereg_img_of_string = success
 let reg_img_of_string x = string_of_member "imageId" x |> ImageID.of_string
 
 let create_snap_of_string x =
-  { snapshot = member "snapshotId" x |> data_to_string;
+  { Create_snapshot.snapshot = member "snapshotId" x |> data_to_string;
     volume = string_of_member "volumeId" x;
     status = string_of_member "status" x;
     start_time = string_of_member "startTime" x; (* string -> time? *)
@@ -43,19 +43,20 @@ let create_snap_of_string x =
 let delete_vol_of_string = success
 
 let console_output_of_string x =
-  { instance = string_of_member "instanceId" x;
+  { Console_output.instance = string_of_member "instanceId" x;
     timestamp = string_of_member "timestamp" x;
     output = string_of_member "output" x; }
 
 let instance_state_of_string x = 
-  { code = string_of_member "code" x |> int_of_string;
+  { Instance_state.code = string_of_member "code" x |> int_of_string;
     name = string_of_member "name" x }
 
-let group_of_string item = { id = string_of_member "groupId" item;
-			     name = string_of_member "groupName" item; } 
+let group_of_string item = 
+  { Group_item.id = string_of_member "groupId" item;
+    name = string_of_member "groupName" item; } 
 
 let running_instances_of_string item = 
-  { id = string_of_member "instanceId" item;
+  { Running_instance.id = string_of_member "instanceId" item;
     image = string_of_member "imageId" item;
 (*    state = member "instanceState" item |> instance_state_of_string; 
     private_dns = string_of_member "privateDnsName" item;
@@ -71,7 +72,7 @@ let running_instances_of_string item =
 (* Docs[1] say there is a requesterId in the XML response BUT there actually isn't? 
 [1] http://docs.aws.amazon.com/AWSEC2/latest/APIReference/ApiReference-query-RunInstances.html *)
 let run_instances_of_string x =
-  { reservation = string_of_member "reservationId" x;
+  { Run_instances.reservation = string_of_member "reservationId" x;
     owner = string_of_member "ownerId" x;
 (*    security_groups = member "groupSet" x |> members "item" |>
 			 List.map group_of_string; *)
@@ -79,7 +80,7 @@ let run_instances_of_string x =
 		|> List.map running_instances_of_string; }					 
 
 let instance_state_change_of_string x = 
-  { id = string_of_member "instanceId" x;
+  { Instance_state_change.id = string_of_member "instanceId" x;
     current = member "currentState" x |> instance_state_of_string;
     previous = member "previousState" x |> instance_state_of_string; }
 
@@ -98,11 +99,11 @@ let terminate_instances_of_string x =
 (* KeyPairs *)
 let desc_keys_of_string x = 
   member "keySet" x |> members "item" |>
-    List.map (fun i -> { name = string_of_member "keyName" i;
+    List.map (fun i -> { Key_pair.name = string_of_member "keyName" i;
 			 fingerprint = string_of_member "keyFingerprint" i; })
 
 (* Regions *)
 let desc_regions_of_string x =
   member "regionInfo" x |> members "item" |>
-    List.map (fun i -> { name = string_of_member "regionName" i |> region_of_string;
+    List.map (fun i -> { Region.name = string_of_member "regionName" i |> region_of_string;
 			 endpoint = string_of_member "regionEndpoint" i; })

@@ -44,5 +44,5 @@ let _ =
 let _ = 
   let running = Lwt_main.run @@ Monad.run @@ launch_instance image my_key my_cert my_bucket in
   running.instances |>
-    List.map (fun (i:running_instance) -> print_endline @@ Printf.sprintf "Launched instance %s" i.id) 
-*)
+    List.map (fun i -> print_endline @@ Printf.sprintf "Launched instance %s" i.Running_instance.id) 
+ *)

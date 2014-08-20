@@ -36,7 +36,7 @@ module EBS : sig
   val create_snapshot : 
     EC2_t.VolumeID.t -> 
     ?description:string -> 
-    ?region:EC2_t.region_name -> unit -> EC2_t.create_snapshot Monad.t
+    ?region:EC2_t.region_name -> unit -> EC2_t.Create_snapshot.t Monad.t
   val delete_volume : 
     EC2_t.VolumeID.t -> 
     ?region:EC2_t.region_name -> unit -> bool Monad.t
@@ -46,7 +46,7 @@ sig
   (*    val describe_status : ?ids:string list -> ?all:bool -> ?region:EC2_t.region_name -> ___ Lwt.t *)
   val get_console_output : 
     EC2_t.InstanceID.t -> 
-    ?region:EC2_t.region_name -> unit -> EC2_t.console_output Monad.t
+    ?region:EC2_t.region_name -> unit -> EC2_t.Console_output.t Monad.t
   val run : 
     ?min:int -> 
     ?max:int -> 
@@ -54,28 +54,28 @@ sig
     ?zone:string -> 
     ?kernel:string -> 
     EC2_t.ImageID.t -> 
-    ?region:EC2_t.region_name -> unit -> EC2_t.run_instances Monad.t
+    ?region:EC2_t.region_name -> unit -> EC2_t.Run_instances.t Monad.t
   val start : 
     EC2_t.InstanceID.t list -> 
-    ?region:EC2_t.region_name -> unit -> EC2_t.instance_state_change list Monad.t
+    ?region:EC2_t.region_name -> unit -> EC2_t.Instance_state_change.t list Monad.t
   val stop : 
     ?force:bool -> 
     EC2_t.InstanceID.t list -> 
-    ?region:EC2_t.region_name-> unit -> EC2_t.instance_state_change list Monad.t
+    ?region:EC2_t.region_name-> unit -> EC2_t.Instance_state_change.t list Monad.t
   val terminate : 
     EC2_t.InstanceID.t list -> 
-    ?region:EC2_t.region_name -> unit -> EC2_t.instance_state_change list Monad.t
+    ?region:EC2_t.region_name -> unit -> EC2_t.Instance_state_change.t list Monad.t
 end	
 module KeyPairs : sig
   val describe :
     ?names:string list -> 
     ?filters:(string * string list) list ->
-    ?region:EC2_t.region_name -> unit -> EC2_t.key_pair list Monad.t
+    ?region:EC2_t.region_name -> unit -> EC2_t.Key_pair.t list Monad.t
 end									  
 module Regions : sig
   val describe : 
     ?regions:EC2_t.region_name list ->
     ?filters:(string * string list) list ->
-    ?region:EC2_t.region_name -> unit -> EC2_t.region list Monad.t
+    ?region:EC2_t.region_name -> unit -> EC2_t.Region.t list Monad.t
 end
   
