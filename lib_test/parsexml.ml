@@ -9,7 +9,7 @@ let (fake : Cohttp.Response.t) =
     flush = false; }
  
 let test (action, (fn : Ezxmlm.nodes -> 'a)) = 
-  let file = Printf.sprintf "lib_test/xml_responses/%s.xml" action in
+  let file = Printf.sprintf "xml_responses/%s.xml" action in
   lwt filestr = 
     let open Lwt_io in
     with_file ~mode:input file read >|= Cohttp_lwt_body.of_string in

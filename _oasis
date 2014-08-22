@@ -42,7 +42,14 @@ Executable custom_kernel
 Executable parsexml
   Path: lib_test
   MainIs: parsexml.ml
-  Custom:true
-  CompiledObject:best
+  Custom: true
+  Build$: flag(tests)
+  CompiledObject: best
   Install: false
   BuildDepends: lwt, lwt.syntax, ec2
+
+Test "parsexml"
+  Run$: flag(tests) 
+  TestTools: parsexml
+  Command: $parsexml
+  WorkingDirectory: lib_test
