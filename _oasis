@@ -7,6 +7,10 @@ OASISFormat: 0.4
 BuildTools: ocamlbuild
 Plugins: META (0.4), DevFiles (0.4)
 
+Flag "ami-tools"
+  Description: Support for registering custom AMIs
+  Default: false
+
 Library ec2
   Path: lib
   Findlibname: ec2
@@ -20,6 +24,7 @@ Library "ec2-ami"
   FindlibParent: ec2
   Modules: Bundle
   InternalModules: S3
+  Build$: flag(ami_tools)
   DataFiles: ec2_certs/*.pem
   BuildDepends: ec2, x509, nocrypto, xmlm, lwt, lwt.syntax, cstruct.unix, oasis.base
 
@@ -37,6 +42,7 @@ Executable custom_kernel
   Custom: true
   CompiledObject: best
   Install: false
+  Build$: flag(ami_tools)
   BuildDepends: lwt, ec2, ec2.ami
 
 Executable parsexml

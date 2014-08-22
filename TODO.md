@@ -1,8 +1,8 @@
 by aug 25
 ---------
 - [ ] seed the random generator (oops)
-- [ ] oasis
-  - [ ] flag for installing ec2.ami
+- [x] oasis
+  - [x] flag for installing ec2.ami
   - [x] set up tests
 - [ ] implement Regions functions
   - [ ] which is just DescribeAvailabilityZones :)
