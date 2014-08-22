@@ -6,7 +6,9 @@ Some examples of usage can be found in the `examples` directory.
 
 # Installation
 ``` 
-$ ./configure
+$ ./configure 
+# or, if you want support for registering your own AMIs:
+# $ ./configure --enable-ami-tools
 $ make
 $ make install
 ```
