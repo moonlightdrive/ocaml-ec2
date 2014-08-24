@@ -101,3 +101,6 @@ end
 module Region : sig
   type t = { name: region_name; endpoint: string; }
 end
+module Zone : sig
+  type t = { name: string; state: string; region: region_name; messages: string list; }
+end

@@ -125,3 +125,6 @@ end
 module Region = struct
   type t = { name: region_name; endpoint: string; }
 end
+module Zone = struct
+  type t = { name: string; state: string; region: region_name; messages: string list; }
+end

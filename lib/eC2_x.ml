@@ -107,3 +107,10 @@ let desc_regions_of_string x =
   member "regionInfo" x |> members "item" |>
     List.map (fun i -> { Region.name = string_of_member "regionName" i |> region_of_string;
 			 endpoint = string_of_member "regionEndpoint" i; })
+let desc_zones_of_string x = 
+  member "availabilityZoneInfo" x |> members "item" |>
+    List.map (fun i -> { Zone.name = string_of_member "zoneName" i;
+                         state = string_of_member "zoneState" i;
+                         region = string_of_member "regionName" i |> region_of_string;
+                         messages = member "messageSet" i |> 
+                                   members "item" |> List.map data_to_string; })

@@ -117,8 +117,8 @@ module API = struct
 			       headers; meth; uri; })
 	    
   let get action = verb `GET action
-  let post action = verb `POST action 
-		  
+  let post action = verb `POST action
+
 end
 
 open EC2_t
@@ -215,5 +215,11 @@ module Regions = struct
     let filters = Util.format_filters filters in
     let params = List.rev_append regions filters in
     API.get "DescribeRegions" ~params desc_regions_of_string ?region
+
+  let describe_zones ?(zones=[]) ?(filters=[]) ?region () =
+    let zones = Util.number_fields "ZoneName.%i" zones in
+    let filters = Util.format_filters filters in
+    let params = List.rev_append zones filters in
+    API.get "DescribeAvailabilityZones" ~params desc_zones_of_string ?region
  	    
 end

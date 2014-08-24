@@ -77,5 +77,9 @@ module Regions : sig
     ?regions:EC2_t.region_name list ->
     ?filters:(string * string list) list ->
     ?region:EC2_t.region_name -> unit -> EC2_t.Region.t list Monad.t
+  val describe_zones :
+    ?zones:string list ->
+    ?filters:(string * string list) list ->
+    ?region:EC2_t.region_name -> unit -> EC2_t.Zone.t list Monad.t
 end
   
