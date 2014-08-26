@@ -16,7 +16,7 @@ Library ec2
   Findlibname: ec2
   Modules: EC2, EC2_t
   InternalModules: Signature4, Monad, EC2_x
-  BuildDepends: cohttp.lwt, lwt.syntax, cohttp, uri, calendar, ezxmlm, cstruct.unix, nocrypto
+  BuildDepends: cohttp.lwt, lwt.syntax, cohttp, uri, calendar, ezxmlm, cstruct.unix, cstruct.lwt, nocrypto
 
 Library "ec2-ami"
   Path: ami

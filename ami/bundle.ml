@@ -293,18 +293,30 @@ let clean_up f () =
 		   tmp @@ Printf.sprintf "%s.tar.gz.enc" @@ Filename.basename f] in
   ignore @@ List.map Unix.unlink to_delete 
 
+(* This is largely based on ocaml-tls [1]
+   I need to find out if this is the proper way to do this 
+https://github.com/mirleft/ocaml-tls/blob/ee1abcb2ab32e1677a1f869c4692db00af8c9403/lwt/tls_lwt.ml *)
+
+let seed ?(device="/dev/urandom") () =
+  let open Lwt in
+  lwt fd = Lwt_unix.(openfile device [O_RDONLY] 0) in
+  let buf = Cstruct.create 32 in
+  Lwt_cstruct.(complete (read fd) buf) >|= fun () ->
+    Nocrypto.Rng.reseed buf
+
 let bundle_img ~key ~cert ~kernel ?ec2_cert ?user f = 
   let open Lwt in
-  Nocrypto.Rng.reseed (Cstruct.of_string "\001\002\003\004");
+  let basename = Filename.basename in
+  ignore @@ seed ();
   let gen_key () = Nocrypto.Rng.generate 16 |> Cstruct.to_string |> hex in
   let aeskey = gen_key () in
   let iv = gen_key ()  in  
   let digest = bundle ~aeskey ~iv f () in
-  let bundle = tmp @@ Printf.sprintf "%s.tar.gz.enc" @@ Filename.basename f in
+  let bundle = tmp @@ Printf.sprintf "%s.tar.gz.enc" @@ basename f in
   lwt parts = bundle |> split >|= digest_parts in
   let manifestdest = manifest_of_file f ?user ?ec2_cert ~key ~cert ~aeskey ~iv ~kernel ~digest ~parts |> 
 		       tree_of_manifest |>
-		       create_manifest (Filename.basename f) in
+		       create_manifest (basename f) in
   clean_up f ();
   let parts_paths = List.map (fun p -> tmp @@ p.filename) parts in
   return (manifestdest, parts_paths)

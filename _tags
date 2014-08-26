@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: df4ea3f0133a899766edfebf11aee0df)
+# DO NOT EDIT (digest: 3996e06e839d5d939133d9f00ffcf5eb)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -18,6 +18,7 @@
 <lib/*.ml{,i}>: pkg_calendar
 <lib/*.ml{,i}>: pkg_cohttp
 <lib/*.ml{,i}>: pkg_cohttp.lwt
+<lib/*.ml{,i}>: pkg_cstruct.lwt
 <lib/*.ml{,i}>: pkg_cstruct.unix
 <lib/*.ml{,i}>: pkg_ezxmlm
 <lib/*.ml{,i}>: pkg_lwt.syntax
@@ -28,6 +29,7 @@
 <ami/*.ml{,i}>: pkg_calendar
 <ami/*.ml{,i}>: pkg_cohttp
 <ami/*.ml{,i}>: pkg_cohttp.lwt
+<ami/*.ml{,i}>: pkg_cstruct.lwt
 <ami/*.ml{,i}>: pkg_cstruct.unix
 <ami/*.ml{,i}>: pkg_ezxmlm
 <ami/*.ml{,i}>: pkg_lwt
@@ -42,6 +44,7 @@
 <examples/describe_regions.{native,byte}>: pkg_calendar
 <examples/describe_regions.{native,byte}>: pkg_cohttp
 <examples/describe_regions.{native,byte}>: pkg_cohttp.lwt
+<examples/describe_regions.{native,byte}>: pkg_cstruct.lwt
 <examples/describe_regions.{native,byte}>: pkg_cstruct.unix
 <examples/describe_regions.{native,byte}>: pkg_ezxmlm
 <examples/describe_regions.{native,byte}>: pkg_lwt
@@ -54,6 +57,7 @@
 <examples/custom_kernel.{native,byte}>: pkg_calendar
 <examples/custom_kernel.{native,byte}>: pkg_cohttp
 <examples/custom_kernel.{native,byte}>: pkg_cohttp.lwt
+<examples/custom_kernel.{native,byte}>: pkg_cstruct.lwt
 <examples/custom_kernel.{native,byte}>: pkg_cstruct.unix
 <examples/custom_kernel.{native,byte}>: pkg_ezxmlm
 <examples/custom_kernel.{native,byte}>: pkg_lwt
@@ -68,6 +72,7 @@
 <examples/*.ml{,i}>: pkg_calendar
 <examples/*.ml{,i}>: pkg_cohttp
 <examples/*.ml{,i}>: pkg_cohttp.lwt
+<examples/*.ml{,i}>: pkg_cstruct.lwt
 <examples/*.ml{,i}>: pkg_cstruct.unix
 <examples/*.ml{,i}>: pkg_ezxmlm
 <examples/*.ml{,i}>: pkg_lwt
@@ -84,6 +89,7 @@
 <lib_test/parsexml.{native,byte}>: pkg_calendar
 <lib_test/parsexml.{native,byte}>: pkg_cohttp
 <lib_test/parsexml.{native,byte}>: pkg_cohttp.lwt
+<lib_test/parsexml.{native,byte}>: pkg_cstruct.lwt
 <lib_test/parsexml.{native,byte}>: pkg_cstruct.unix
 <lib_test/parsexml.{native,byte}>: pkg_ezxmlm
 <lib_test/parsexml.{native,byte}>: pkg_lwt
@@ -94,6 +100,7 @@
 <lib_test/*.ml{,i}>: pkg_calendar
 <lib_test/*.ml{,i}>: pkg_cohttp
 <lib_test/*.ml{,i}>: pkg_cohttp.lwt
+<lib_test/*.ml{,i}>: pkg_cstruct.lwt
 <lib_test/*.ml{,i}>: pkg_cstruct.unix
 <lib_test/*.ml{,i}>: pkg_ezxmlm
 <lib_test/*.ml{,i}>: pkg_lwt
