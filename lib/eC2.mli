@@ -67,6 +67,7 @@ sig
     ?region:EC2_t.region_name -> unit -> EC2_t.Instance_state_change.t list Monad.t
 end	
 module KeyPairs : sig
+  val delete : string -> ?region:EC2_t.region_name -> unit -> bool Monad.t
   val describe :
     ?names:string list -> 
     ?filters:(string * string list) list ->

@@ -200,11 +200,19 @@ end
 
 module KeyPairs = struct
 
+  let create name ?region () = failwith "undefined"
+
+  let delete name ?region () = 
+    let params = [("KeyName", name)] in
+    API.post "DeleteKeyPair" ~params del_key_of_string ?region
+
   let describe ?(names=[]) ?(filters=[]) ?region () = 
     let params = Util.number_fields "KeyName.%i" names in
     let params = List.rev_append params
 				 (Util.format_filters filters) in
     API.get "DescribeKeyPairs" ~params desc_keys_of_string ?region
+
+  let import ? region () = failwith "undefined"
 
 end
 

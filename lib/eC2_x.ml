@@ -97,6 +97,8 @@ let terminate_instances_of_string x =
     List.map instance_state_change_of_string
  
 (* KeyPairs *)
+let del_key_of_string = success
+
 let desc_keys_of_string x = 
   member "keySet" x |> members "item" |>
     List.map (fun i -> { Key_pair.name = string_of_member "keyName" i;
