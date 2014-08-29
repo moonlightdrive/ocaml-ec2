@@ -307,7 +307,7 @@ let seed ?(device="/dev/urandom") () =
 let bundle_img ~key ~cert ~kernel ?ec2_cert ?user f = 
   let open Lwt in
   let basename = Filename.basename in
-  ignore @@ seed ();
+  ignore_result @@ seed ();
   let gen_key () = Nocrypto.Rng.generate 16 |> Cstruct.to_string |> hex in
   let aeskey = gen_key () in
   let iv = gen_key ()  in  
