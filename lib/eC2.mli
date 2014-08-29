@@ -68,11 +68,13 @@ sig
 end	
 module KeyPairs : sig
   type name = string
+  val create : name -> ?region:EC2_t.region_name -> unit -> EC2_t.Create_key_pair.t Monad.t
   val delete : name -> ?region:EC2_t.region_name -> unit -> bool Monad.t
   val describe :
     ?ns:name list -> 
     ?filters:(string * string list) list ->
     ?region:EC2_t.region_name -> unit -> EC2_t.Key_pair.t list Monad.t
+  val import : n:name -> key:string -> ?region:EC2_t.region_name -> unit -> EC2_t.Key_pair.t Monad.t
 end									  
 module Regions : sig
   val describe : 

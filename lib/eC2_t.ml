@@ -119,6 +119,9 @@ module Instance_state_change = struct
 	     previous: Instance_state.t;
 	   }
 end
+module Create_key_pair = struct
+  type t = { name: string; fingerprint: string; material: string; }
+end
 module Key_pair = struct
   type t  = { name: string; fingerprint: string; }
 end

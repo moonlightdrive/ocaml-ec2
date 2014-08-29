@@ -97,12 +97,20 @@ let terminate_instances_of_string x =
     List.map instance_state_change_of_string
  
 (* KeyPairs *)
+let create_key_of_string x = 
+  { Create_key_pair.name = string_of_member "keyName" x;
+    fingerprint = string_of_member "keyFingerprint" x;
+    material = string_of_member "keyMaterial" x; }
+
 let del_key_of_string = success
 
+let key_of_string x = { Key_pair.name = string_of_member "keyName" x;
+                        fingerprint = string_of_member "keyFingerprint" x; }
+
 let desc_keys_of_string x = 
-  member "keySet" x |> members "item" |>
-    List.map (fun i -> { Key_pair.name = string_of_member "keyName" i;
-			 fingerprint = string_of_member "keyFingerprint" i; })
+  member "keySet" x |> members "item" |> List.map (fun i -> key_of_string i)
+
+let import_key_of_string = key_of_string
 
 (* Regions *)
 let desc_regions_of_string x =

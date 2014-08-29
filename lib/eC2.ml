@@ -202,7 +202,9 @@ module KeyPairs = struct
 
   type name = string
 
-  let create (n : name) ?region () = failwith "undefined"
+  let create (n : name) ?region () = 
+    let params = [("KeyName", n)] in
+    API.post "CreateKeyPair" ~params create_key_of_string ?region
 
   let delete (n : name) ?region () = 
     let params = [("KeyName", n)] in
@@ -214,7 +216,9 @@ module KeyPairs = struct
 				 (Util.format_filters filters) in
     API.get "DescribeKeyPairs" ~params desc_keys_of_string ?region
 
-  let import ? region () = failwith "undefined"
+  let import ~(n : name) ~key ?region () =
+    let params = ["KeyName", n; "PublicKeyMaterial", key] in
+    API.post "ImportKeyPair" ~params import_key_of_string ?region
 
 end
 

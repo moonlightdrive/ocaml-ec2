@@ -95,6 +95,12 @@ module Instance_state_change : sig
 	     previous: Instance_state.t;
 	   }
 end
+module Create_key_pair : sig
+  type t = { name: string; 
+             fingerprint: string; (* SHA-1 digest of the DER encoded private key *)
+             material: string;    (* unencrypted PEM encoded RSA private key *)
+           }
+end
 module Key_pair : sig
   type t = { name: string; fingerprint: string; }
 end
