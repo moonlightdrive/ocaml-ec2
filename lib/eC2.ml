@@ -84,17 +84,17 @@ module API = struct
     (* response_to_file action (envelope, body); *)
     let response = "Response" in
     let actionresp = action^response in
-    let parse_err (envelope, body) = 
+    let parse_err (envelope, body) not_found = 
       let awserr_of_str x : Monad.aws_error = 
 	{ code = member "Code" x |> data_to_string;
 	  msg = member "Message" x |> data_to_string ; } in	      
       try let body = member response body in
 	  let errs = List.map awserr_of_str (member "Errors" body |> members "Error") in
 	  return @@ Monad.(error @@ Generic (envelope, errs))
-      with exn -> return @@ Monad.(error @@ XML action) in
+      with exn -> return @@ Monad.(error @@ XML (action, not_found)) in
     lwt (_,body) = Cohttp_lwt_body.to_string body >|= from_string in
     try return @@ Monad.response @@ fn @@ member actionresp body 
-    with exn -> parse_err (envelope, body)
+    with Tag_not_found t -> parse_err (envelope, body) t
 				     
   let lwt_req {Monad.api; body; headers; meth; uri} =
     Cohttp_lwt_unix.Client.call ~headers ~body ~chunked:false meth uri
@@ -200,14 +200,16 @@ end
 
 module KeyPairs = struct
 
-  let create name ?region () = failwith "undefined"
+  type name = string
 
-  let delete name ?region () = 
-    let params = [("KeyName", name)] in
+  let create (n : name) ?region () = failwith "undefined"
+
+  let delete (n : name) ?region () = 
+    let params = [("KeyName", n)] in
     API.post "DeleteKeyPair" ~params del_key_of_string ?region
 
-  let describe ?(names=[]) ?(filters=[]) ?region () = 
-    let params = Util.number_fields "KeyName.%i" names in
+  let describe ?(ns=([] : name list)) ?(filters=[]) ?region () = 
+    let params = Util.number_fields "KeyName.%i" ns in
     let params = List.rev_append params
 				 (Util.format_filters filters) in
     API.get "DescribeKeyPairs" ~params desc_keys_of_string ?region
