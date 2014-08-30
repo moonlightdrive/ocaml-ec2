@@ -1,22 +1,21 @@
-by aug 29
----------
-- [ ] move common functions in eC2.ml & s3.ml to utils.ml
-- [ ] XML parsing 
-  - [ ] improve errors eg "id in ParseInstancesResponse"
-  - [ ] handle lack of field that Amazon promised would be returned
-- [ ] implement KeyPairs functions
+by sep 5
+--------
+- [ ] eC2_t: having `Create_key_pair.t` and `Key_pair.t` is ugly... would prefer `Key_pair.created` and `Key_pair.description`
+- [ ] ec2 commands: ensuring idempotency
+- [ ] add (error) `Response` XML parsing test
+- [ ] implement Instances functions
 
 upcoming
 --------
 - [ ] fix `to_hex` (currently doing embarrassing string manip on Cstruct.hexdump)
 - [ ] would be nice to have a monad.mli if possible
-- [ ] ec2 commands: insuring idempotency
-- [ ] implement remaining EC2 API
 - [ ] turn travis back on
 - [ ] cleanup files when things fail!
+- [ ] XML: fail gracefully (?) when Amazon promises us a field that we don't actually get
 
 eventually
 ----------
 - [ ] deal with s3 errors
 - [ ] determine the proper way of getting OASIS's data_dir
 - [ ] what if we could generate eC2_x.ml & eC2_t.ml{,i} from the wdsl?!
+- [ ] eC2.handle_response logic is getting a little confusing
