@@ -50,10 +50,14 @@ module Hash = struct
 
 end
 
-module Signature = struct
+(* Something below this is giving us an Exception: Not_found issue.... *)
 
-  let iam_secret = Unix.getenv "AWS_SECRET_KEY"
-  let iam_access = Unix.getenv "AWS_ACCESS_KEY"
+module Signature = struct
+  let retrieve_key s = try Unix.getenv s
+    with Not_found -> failwith @@ Printf.sprintf "Environment variable %s not found." s
+
+  let iam_secret = retrieve_key "AWS_SECRET_KEY"
+  let iam_access = retrieve_key "AWS_ACCESS_KEY"
 
   let signing_algorithm = "AWS4-HMAC-SHA256"
 
@@ -120,4 +124,4 @@ let realize_headers ?acl meth uri body_str api region =
   match acl with 
   | None -> headers
   | Some acl -> Cohttp.Header.add headers acl_str acl
-    
+
