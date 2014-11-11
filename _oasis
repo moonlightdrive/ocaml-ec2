@@ -32,7 +32,7 @@ Executable describe_regions
   Path: examples
   MainIs: describe_regions.ml
   Custom: true
-  CompiledObject: best
+  CompiledObject: byte 
   Install: false
   BuildDepends: lwt, ec2
 

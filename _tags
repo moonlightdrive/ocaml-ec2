@@ -1,8 +1,9 @@
 # OASIS_START
-# DO NOT EDIT (digest: 3996e06e839d5d939133d9f00ffcf5eb)
+# DO NOT EDIT (digest: f95e677bbd0b0ae58d51450808ef1580)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
+true: annot, bin_annot
 <**/.svn>: -traverse
 <**/.svn>: not_hygienic
 ".bzr": -traverse
@@ -15,44 +16,44 @@
 "_darcs": not_hygienic
 # Library ec2
 "lib/ec2.cmxs": use_ec2
-<lib/*.ml{,i}>: pkg_calendar
-<lib/*.ml{,i}>: pkg_cohttp
-<lib/*.ml{,i}>: pkg_cohttp.lwt
-<lib/*.ml{,i}>: pkg_cstruct.lwt
-<lib/*.ml{,i}>: pkg_cstruct.unix
-<lib/*.ml{,i}>: pkg_ezxmlm
-<lib/*.ml{,i}>: pkg_lwt.syntax
-<lib/*.ml{,i}>: pkg_nocrypto
-<lib/*.ml{,i}>: pkg_uri
+<lib/*.ml{,i,y}>: pkg_calendar
+<lib/*.ml{,i,y}>: pkg_cohttp
+<lib/*.ml{,i,y}>: pkg_cohttp.lwt
+<lib/*.ml{,i,y}>: pkg_cstruct.lwt
+<lib/*.ml{,i,y}>: pkg_cstruct.unix
+<lib/*.ml{,i,y}>: pkg_ezxmlm
+<lib/*.ml{,i,y}>: pkg_lwt.syntax
+<lib/*.ml{,i,y}>: pkg_nocrypto
+<lib/*.ml{,i,y}>: pkg_uri
 # Library ec2-ami
 "ami/ec2-ami.cmxs": use_ec2-ami
-<ami/*.ml{,i}>: pkg_calendar
-<ami/*.ml{,i}>: pkg_cohttp
-<ami/*.ml{,i}>: pkg_cohttp.lwt
-<ami/*.ml{,i}>: pkg_cstruct.lwt
-<ami/*.ml{,i}>: pkg_cstruct.unix
-<ami/*.ml{,i}>: pkg_ezxmlm
-<ami/*.ml{,i}>: pkg_lwt
-<ami/*.ml{,i}>: pkg_lwt.syntax
-<ami/*.ml{,i}>: pkg_nocrypto
-<ami/*.ml{,i}>: pkg_oasis.base
-<ami/*.ml{,i}>: pkg_uri
-<ami/*.ml{,i}>: pkg_x509
-<ami/*.ml{,i}>: pkg_xmlm
-<ami/*.ml{,i}>: use_ec2
+<ami/*.ml{,i,y}>: pkg_calendar
+<ami/*.ml{,i,y}>: pkg_cohttp
+<ami/*.ml{,i,y}>: pkg_cohttp.lwt
+<ami/*.ml{,i,y}>: pkg_cstruct.lwt
+<ami/*.ml{,i,y}>: pkg_cstruct.unix
+<ami/*.ml{,i,y}>: pkg_ezxmlm
+<ami/*.ml{,i,y}>: pkg_lwt
+<ami/*.ml{,i,y}>: pkg_lwt.syntax
+<ami/*.ml{,i,y}>: pkg_nocrypto
+<ami/*.ml{,i,y}>: pkg_oasis.base
+<ami/*.ml{,i,y}>: pkg_uri
+<ami/*.ml{,i,y}>: pkg_x509
+<ami/*.ml{,i,y}>: pkg_xmlm
+<ami/*.ml{,i,y}>: use_ec2
 # Executable describe_regions
-<examples/describe_regions.{native,byte}>: pkg_calendar
-<examples/describe_regions.{native,byte}>: pkg_cohttp
-<examples/describe_regions.{native,byte}>: pkg_cohttp.lwt
-<examples/describe_regions.{native,byte}>: pkg_cstruct.lwt
-<examples/describe_regions.{native,byte}>: pkg_cstruct.unix
-<examples/describe_regions.{native,byte}>: pkg_ezxmlm
-<examples/describe_regions.{native,byte}>: pkg_lwt
-<examples/describe_regions.{native,byte}>: pkg_lwt.syntax
-<examples/describe_regions.{native,byte}>: pkg_nocrypto
-<examples/describe_regions.{native,byte}>: pkg_uri
-<examples/describe_regions.{native,byte}>: use_ec2
-<examples/describe_regions.{native,byte}>: custom
+"examples/describe_regions.byte": pkg_calendar
+"examples/describe_regions.byte": pkg_cohttp
+"examples/describe_regions.byte": pkg_cohttp.lwt
+"examples/describe_regions.byte": pkg_cstruct.lwt
+"examples/describe_regions.byte": pkg_cstruct.unix
+"examples/describe_regions.byte": pkg_ezxmlm
+"examples/describe_regions.byte": pkg_lwt
+"examples/describe_regions.byte": pkg_lwt.syntax
+"examples/describe_regions.byte": pkg_nocrypto
+"examples/describe_regions.byte": pkg_uri
+"examples/describe_regions.byte": use_ec2
+"examples/describe_regions.byte": custom
 # Executable custom_kernel
 <examples/custom_kernel.{native,byte}>: pkg_calendar
 <examples/custom_kernel.{native,byte}>: pkg_cohttp
@@ -69,21 +70,21 @@
 <examples/custom_kernel.{native,byte}>: pkg_xmlm
 <examples/custom_kernel.{native,byte}>: use_ec2
 <examples/custom_kernel.{native,byte}>: use_ec2-ami
-<examples/*.ml{,i}>: pkg_calendar
-<examples/*.ml{,i}>: pkg_cohttp
-<examples/*.ml{,i}>: pkg_cohttp.lwt
-<examples/*.ml{,i}>: pkg_cstruct.lwt
-<examples/*.ml{,i}>: pkg_cstruct.unix
-<examples/*.ml{,i}>: pkg_ezxmlm
-<examples/*.ml{,i}>: pkg_lwt
-<examples/*.ml{,i}>: pkg_lwt.syntax
-<examples/*.ml{,i}>: pkg_nocrypto
-<examples/*.ml{,i}>: pkg_oasis.base
-<examples/*.ml{,i}>: pkg_uri
-<examples/*.ml{,i}>: pkg_x509
-<examples/*.ml{,i}>: pkg_xmlm
-<examples/*.ml{,i}>: use_ec2
-<examples/*.ml{,i}>: use_ec2-ami
+<examples/*.ml{,i,y}>: pkg_calendar
+<examples/*.ml{,i,y}>: pkg_cohttp
+<examples/*.ml{,i,y}>: pkg_cohttp.lwt
+<examples/*.ml{,i,y}>: pkg_cstruct.lwt
+<examples/*.ml{,i,y}>: pkg_cstruct.unix
+<examples/*.ml{,i,y}>: pkg_ezxmlm
+<examples/*.ml{,i,y}>: pkg_lwt
+<examples/*.ml{,i,y}>: pkg_lwt.syntax
+<examples/*.ml{,i,y}>: pkg_nocrypto
+<examples/*.ml{,i,y}>: pkg_oasis.base
+<examples/*.ml{,i,y}>: pkg_uri
+<examples/*.ml{,i,y}>: pkg_x509
+<examples/*.ml{,i,y}>: pkg_xmlm
+<examples/*.ml{,i,y}>: use_ec2
+<examples/*.ml{,i,y}>: use_ec2-ami
 <examples/custom_kernel.{native,byte}>: custom
 # Executable parsexml
 <lib_test/parsexml.{native,byte}>: pkg_calendar
@@ -97,16 +98,16 @@
 <lib_test/parsexml.{native,byte}>: pkg_nocrypto
 <lib_test/parsexml.{native,byte}>: pkg_uri
 <lib_test/parsexml.{native,byte}>: use_ec2
-<lib_test/*.ml{,i}>: pkg_calendar
-<lib_test/*.ml{,i}>: pkg_cohttp
-<lib_test/*.ml{,i}>: pkg_cohttp.lwt
-<lib_test/*.ml{,i}>: pkg_cstruct.lwt
-<lib_test/*.ml{,i}>: pkg_cstruct.unix
-<lib_test/*.ml{,i}>: pkg_ezxmlm
-<lib_test/*.ml{,i}>: pkg_lwt
-<lib_test/*.ml{,i}>: pkg_lwt.syntax
-<lib_test/*.ml{,i}>: pkg_nocrypto
-<lib_test/*.ml{,i}>: pkg_uri
-<lib_test/*.ml{,i}>: use_ec2
+<lib_test/*.ml{,i,y}>: pkg_calendar
+<lib_test/*.ml{,i,y}>: pkg_cohttp
+<lib_test/*.ml{,i,y}>: pkg_cohttp.lwt
+<lib_test/*.ml{,i,y}>: pkg_cstruct.lwt
+<lib_test/*.ml{,i,y}>: pkg_cstruct.unix
+<lib_test/*.ml{,i,y}>: pkg_ezxmlm
+<lib_test/*.ml{,i,y}>: pkg_lwt
+<lib_test/*.ml{,i,y}>: pkg_lwt.syntax
+<lib_test/*.ml{,i,y}>: pkg_nocrypto
+<lib_test/*.ml{,i,y}>: pkg_uri
+<lib_test/*.ml{,i,y}>: use_ec2
 <lib_test/parsexml.{native,byte}>: custom
 # OASIS_STOP
