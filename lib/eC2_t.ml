@@ -33,7 +33,7 @@ module VolumeID = ID
  
 type region_name = 
     US_EAST_1 | US_WEST_2 | US_WEST_1 |
-    EU_WEST_1 | 
+    EU_CENTRAL_1 | EU_WEST_1 | 
     AP_SOUTHEAST_1 | AP_SOUTHEAST_2 | AP_NORTHEAST_1 |
     SA_EAST_1
 
@@ -41,6 +41,7 @@ let region_of_string = function
   | "us-east-1" -> US_EAST_1 
   | "us-west-1" -> US_WEST_1 
   | "us-west-2" -> US_WEST_2
+  | "eu-central-1" -> EU_CENTRAL_1
   | "eu-west-1" -> EU_WEST_1
   | "ap-southeast-1" -> AP_SOUTHEAST_1 
   | "ap-southeast-2" -> AP_SOUTHEAST_2
