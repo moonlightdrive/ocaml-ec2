@@ -145,7 +145,7 @@ let digest_parts =
   List.map to_part 
 
 let pub_enc key msg =
-  Nocrypto.RSA.PKCS1.encrypt ~key (Cstruct.of_string msg) |> Cstruct.to_string |> hex
+  Nocrypto.Rsa.PKCS1.encrypt ~key (Cstruct.of_string msg) |> Cstruct.to_string |> hex
 	     
 let pubkey_of_cert file = 
   let open Asn_grammars in
@@ -160,7 +160,7 @@ let split file =
   let chunksize = 1024 * 1024 * 10 in
   lwt filelen = file_length file >|= Int64.to_int in
   let ic = open_in_bin file in
-  let buffer = String.create filelen in
+  let buffer = Bytes.create filelen in
   really_input ic buffer 0 filelen;
   close_in ic;
   let basename = Filename.(chop_suffix file ".tar.gz.enc" |> basename) in
@@ -171,7 +171,7 @@ let split file =
     let oc = open_out_bin part in
     Pervasives.output oc buf 0 len;
     close_out oc;
-    let newbuf = String.create (rem - len) in
+    let newbuf = Bytes.create (rem - len) in
     match newbuf with
     | "" -> return @@ List.rev (part::ps)
     | s -> String.blit buf len newbuf 0 (String.length newbuf);
@@ -251,7 +251,7 @@ let sign keyfile kernel i =
   o_tree @@ tree_of_img i; 
   Buffer.contents b |> Cstruct.of_string |>
     Nocrypto.Hash.SHA1.digest |>
-    Nocrypto.RSA.PKCS1.sign ~key
+    Nocrypto.Rsa.PKCS1.sign ~key
 
 let manifest_of_file f ?user ?ec2_cert ~key ~cert ~aeskey ~iv ~kernel ~digest ~parts = 
   let image = img_of_file ~aeskey ~iv ~cert ~digest ~parts ?user ?ec2_cert f in
