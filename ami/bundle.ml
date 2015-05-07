@@ -148,11 +148,13 @@ let pub_enc key msg =
   Nocrypto.Rsa.PKCS1.encrypt ~key (Cstruct.of_string msg) |> Cstruct.to_string |> hex
 	     
 let pubkey_of_cert file = 
-  let open Asn_grammars in
+  (* let open Asn_grammars in *) (* MCP - Asn_grammars no longer exposed from
+                                    x509 as of 0.3.0 *)
   Unix_cstruct.of_fd Unix.(openfile file [O_RDONLY] 0) |>
-    X509.Cert.of_pem_cstruct1 |> 
-    fun c -> (Certificate.asn_of_cert c).tbs_cert.pk_info |>
-    function | PK.RSA pub -> pub | _ -> invalid_arg "No public key in certificate"
+    X509.Encoding.Pem.Cert.of_pem_cstruct1 |> 
+  (* basically we're trying to get the public key out of this cert *)
+    X509.cert_pubkey |>
+    function | Some (`RSA pub) -> pub | _ -> invalid_arg "No public RSA key in certificate"
 
 let split file = 
   let open Lwt in
@@ -244,7 +246,7 @@ let sign keyfile kernel i =
       | E (tag, childs) -> `El (tag, childs) 
       | D d -> `Data d in
     Xmlm.output_tree frag oc in
- let key = X509.PK.of_pem_cstruct1 @@ cs_of_file keyfile in
+ let key = X509.Encoding.Pem.PK.of_pem_cstruct1 @@ cs_of_file keyfile in
   out (`Dtd None);
   o_tree @@ tree_of_machconf @@ machconf kernel;
   out (`Dtd None);
@@ -255,13 +257,12 @@ let sign keyfile kernel i =
 
 let manifest_of_file f ?user ?ec2_cert ~key ~cert ~aeskey ~iv ~kernel ~digest ~parts = 
   let image = img_of_file ~aeskey ~iv ~cert ~digest ~parts ?user ?ec2_cert f in
+  let signature = Cstruct.to_string (sign key kernel image) |> hex in
   { version = manivers;
     bundler;
     machine_config = machconf kernel;
     image;
-    signature = match sign key kernel image with 
-		| Some s -> Cstruct.to_string s |> hex
-		| None -> raise (Failure "error signing manifest"); }
+    signature; }
 
 let tree_of_manifest m = 
   el "manifest" [ el "version" [data m.version];
