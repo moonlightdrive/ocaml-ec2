@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: f95e677bbd0b0ae58d51450808ef1580)
+# DO NOT EDIT (digest: 6148cc3b15b946694e0280a424d5626b)
 # Ignore VCS directories, you can use the same kind of rule outside
 # OASIS_START/STOP if you want to exclude directories that contains
 # useless stuff for the build process
@@ -22,6 +22,7 @@ true: annot, bin_annot
 <lib/*.ml{,i,y}>: pkg_cstruct.lwt
 <lib/*.ml{,i,y}>: pkg_cstruct.unix
 <lib/*.ml{,i,y}>: pkg_ezxmlm
+<lib/*.ml{,i,y}>: pkg_hex
 <lib/*.ml{,i,y}>: pkg_lwt.syntax
 <lib/*.ml{,i,y}>: pkg_nocrypto
 <lib/*.ml{,i,y}>: pkg_uri
@@ -33,6 +34,7 @@ true: annot, bin_annot
 <ami/*.ml{,i,y}>: pkg_cstruct.lwt
 <ami/*.ml{,i,y}>: pkg_cstruct.unix
 <ami/*.ml{,i,y}>: pkg_ezxmlm
+<ami/*.ml{,i,y}>: pkg_hex
 <ami/*.ml{,i,y}>: pkg_lwt
 <ami/*.ml{,i,y}>: pkg_lwt.syntax
 <ami/*.ml{,i,y}>: pkg_nocrypto
@@ -48,6 +50,7 @@ true: annot, bin_annot
 "examples/describe_regions.byte": pkg_cstruct.lwt
 "examples/describe_regions.byte": pkg_cstruct.unix
 "examples/describe_regions.byte": pkg_ezxmlm
+"examples/describe_regions.byte": pkg_hex
 "examples/describe_regions.byte": pkg_lwt
 "examples/describe_regions.byte": pkg_lwt.syntax
 "examples/describe_regions.byte": pkg_nocrypto
@@ -61,6 +64,7 @@ true: annot, bin_annot
 <examples/custom_kernel.{native,byte}>: pkg_cstruct.lwt
 <examples/custom_kernel.{native,byte}>: pkg_cstruct.unix
 <examples/custom_kernel.{native,byte}>: pkg_ezxmlm
+<examples/custom_kernel.{native,byte}>: pkg_hex
 <examples/custom_kernel.{native,byte}>: pkg_lwt
 <examples/custom_kernel.{native,byte}>: pkg_lwt.syntax
 <examples/custom_kernel.{native,byte}>: pkg_nocrypto
@@ -76,6 +80,7 @@ true: annot, bin_annot
 <examples/*.ml{,i,y}>: pkg_cstruct.lwt
 <examples/*.ml{,i,y}>: pkg_cstruct.unix
 <examples/*.ml{,i,y}>: pkg_ezxmlm
+<examples/*.ml{,i,y}>: pkg_hex
 <examples/*.ml{,i,y}>: pkg_lwt
 <examples/*.ml{,i,y}>: pkg_lwt.syntax
 <examples/*.ml{,i,y}>: pkg_nocrypto
@@ -93,6 +98,7 @@ true: annot, bin_annot
 <lib_test/parsexml.{native,byte}>: pkg_cstruct.lwt
 <lib_test/parsexml.{native,byte}>: pkg_cstruct.unix
 <lib_test/parsexml.{native,byte}>: pkg_ezxmlm
+<lib_test/parsexml.{native,byte}>: pkg_hex
 <lib_test/parsexml.{native,byte}>: pkg_lwt
 <lib_test/parsexml.{native,byte}>: pkg_lwt.syntax
 <lib_test/parsexml.{native,byte}>: pkg_nocrypto
@@ -104,6 +110,7 @@ true: annot, bin_annot
 <lib_test/*.ml{,i,y}>: pkg_cstruct.lwt
 <lib_test/*.ml{,i,y}>: pkg_cstruct.unix
 <lib_test/*.ml{,i,y}>: pkg_ezxmlm
+<lib_test/*.ml{,i,y}>: pkg_hex
 <lib_test/*.ml{,i,y}>: pkg_lwt
 <lib_test/*.ml{,i,y}>: pkg_lwt.syntax
 <lib_test/*.ml{,i,y}>: pkg_nocrypto

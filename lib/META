@@ -1,9 +1,9 @@
 # OASIS_START
-# DO NOT EDIT (digest: f8968b3858bb6a894da7c0ac347afdc7)
+# DO NOT EDIT (digest: 58107721b5003c585bae1a26724ea48c)
 version = "0.1"
 description = "Amazon EC2 API interface"
 requires =
-"cohttp.lwt lwt.syntax cohttp uri calendar ezxmlm cstruct.unix cstruct.lwt nocrypto"
+"cohttp.lwt lwt.syntax cohttp uri calendar ezxmlm cstruct.unix cstruct.lwt nocrypto hex"
 archive(byte) = "ec2.cma"
 archive(byte, plugin) = "ec2.cma"
 archive(native) = "ec2.cmxa"

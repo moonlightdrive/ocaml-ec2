@@ -35,12 +35,7 @@ module Hash = struct
   open Cstruct
   open Nocrypto.Hash.SHA256
 
-  let hex_encode str = 
-    let remove ch str = String.concat "" @@ Stringext.split ~on:ch str in
-    let buf = Buffer.create 32 in
-    of_string str |>
-      hexdump_to_buffer buf;
-    remove ' ' @@ remove '\n' @@ Buffer.contents buf
+  let hex_encode s = Hex.of_string s |> fun (`Hex hstr) -> hstr
 
   let sha256 ?k str = match k with
     | None -> to_string @@ digest (of_string str)
