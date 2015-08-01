@@ -118,9 +118,12 @@ let realize_headers ?acl meth uri body_str api region =
 		       ; ("Signature", signature) 
 		       ]
     |> String.concat ", " in
-  let headers = Cohttp.Header.of_list [ "Authorization", auth;
-					"Content-Type", content_type;
-					"X-Amz-Date", Time.date_time timestamp; ] in
+  let headers =
+    let content_length = Cohttp.Transfer.Fixed (String.length body_str |> Int64.of_int) in
+    Cohttp.Header.(of_list [ "Authorization", auth;
+		            "Content-Type", content_type;
+		            "X-Amz-Date", Time.date_time timestamp; ] |>
+    fun h -> add_transfer_encoding h content_length) in
   match acl with 
   | None -> headers
   | Some acl -> Cohttp.Header.add headers acl_str acl
