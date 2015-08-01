@@ -146,15 +146,13 @@ let digest_parts =
 
 let pub_enc key msg =
   Nocrypto.Rsa.PKCS1.encrypt ~key (Cstruct.of_string msg) |> Cstruct.to_string |> hex
-	     
+
 let pubkey_of_cert file = 
-  (* let open Asn_grammars in *) (* MCP - Asn_grammars no longer exposed from
-                                    x509 as of 0.3.0 *)
   Unix_cstruct.of_fd Unix.(openfile file [O_RDONLY] 0) |>
-    X509.Encoding.Pem.Cert.of_pem_cstruct1 |> 
-  (* basically we're trying to get the public key out of this cert *)
-    X509.cert_pubkey |>
-    function | Some (`RSA pub) -> pub | _ -> invalid_arg "No public RSA key in certificate"
+  X509.Encoding.Pem.Certificate.of_pem_cstruct1 |>
+  X509.public_key |> function
+  | `RSA pub -> pub
+  | `EC_pub _ -> invalid_arg "No public RSA key in certificate"
 
 let split file = 
   let open Lwt in
@@ -246,14 +244,15 @@ let sign keyfile kernel i =
       | E (tag, childs) -> `El (tag, childs) 
       | D d -> `Data d in
     Xmlm.output_tree frag oc in
- let key = X509.Encoding.Pem.PK.of_pem_cstruct1 @@ cs_of_file keyfile in
+  let key = X509.Encoding.Pem.Private_key.of_pem_cstruct1 @@ cs_of_file keyfile |>
+  function `RSA priv -> priv in
   out (`Dtd None);
   o_tree @@ tree_of_machconf @@ machconf kernel;
   out (`Dtd None);
   o_tree @@ tree_of_img i; 
   Buffer.contents b |> Cstruct.of_string |>
     Nocrypto.Hash.SHA1.digest |>
-    Nocrypto.Rsa.PKCS1.sign ~key
+    Nocrypto.Rsa.PKCS1.sig_encode ~key
 
 let manifest_of_file f ?user ?ec2_cert ~key ~cert ~aeskey ~iv ~kernel ~digest ~parts = 
   let image = img_of_file ~aeskey ~iv ~cert ~digest ~parts ?user ?ec2_cert f in
